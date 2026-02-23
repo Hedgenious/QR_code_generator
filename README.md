@@ -11,4 +11,13 @@
 ## Запуск
 
 1. Локально: откройте `index.html`.
-2. Online: используйте GitHub Pages (Source: `Deploy from a branch`, Branch: `main`).
+2. Online: используется автодеплой через GitHub Actions.
+
+## Автодеплой на GitHub Pages
+
+В репозитории добавлен workflow: `.github/workflows/deploy-pages.yml`.
+
+Как включить один раз:
+1. Откройте `Settings` репозитория → `Pages`.
+2. В `Source` выберите `GitHub Actions`.
+3. Запушьте в `main` (или `master`) — сайт задеплоится автоматически.

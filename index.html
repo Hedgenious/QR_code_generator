@@ -267,9 +267,9 @@
 	/* QR Main Layout */
 	.qr-main-layout {
 		display: grid;
-		grid-template-columns: auto auto auto;
+		grid-template-columns: 86px auto 116px;
 		align-items: center;
-		gap: 20px;
+		gap: 14px;
 		width: 100%;
 		max-width: 760px;
 		margin-bottom: 20px;
@@ -278,18 +278,20 @@
 	.qr-style-picker {
 		display: flex;
 		gap: 10px;
-		flex-wrap: wrap;
+		flex-direction: column;
+		flex-wrap: nowrap;
 		justify-content: center;
+		align-items: center;
 	}
 
 	.qr-left-controls {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: 12px;
+		gap: 10px;
 		min-width: 0;
 		background: var(--bg-card);
-		padding: 10px;
+		padding: 10px 8px;
 		border-radius: 14px;
 		border: 1px solid var(--border);
 	}
@@ -367,11 +369,11 @@
 
 	.action-row {
 		display: grid;
-		grid-template-columns: repeat(2, 1fr);
-		gap: 10px;
-		width: 240px;
+		grid-template-columns: 1fr;
+		gap: 8px;
+		width: 116px;
 		background: var(--bg-card);
-		padding: 10px;
+		padding: 8px;
 		border-radius: 14px;
 		border: 1px solid var(--border);
 	}
@@ -381,17 +383,17 @@
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
-		padding: 12px 6px;
+		padding: 10px 4px;
 		background: var(--bg-card);
 		border: 1px solid var(--border);
-		border-radius: 14px;
+		border-radius: 10px;
 		color: var(--text-main);
-		font-size: 11px;
+		font-size: 10px;
 		font-weight: 700;
 		cursor: pointer;
 		transition: all 0.2s;
 	}
-	.btn-dl span { margin-bottom: 6px; font-size: 20px; }
+	.btn-dl span { margin-bottom: 4px; font-size: 16px; }
 	.btn-dl:hover {
 		background: var(--primary);
 		color: white;
@@ -450,6 +452,7 @@
 		.qr-main-layout { grid-template-columns: 1fr; }
 		.qr-left-controls, .action-row { width: 100%; }
 		.action-row { grid-template-columns: repeat(2, 1fr); }
+		.qr-style-picker { flex-direction: row; flex-wrap: wrap; }
 		/* .theme-panel removed */
 		.lang-switcher { top: 15px; right: 15px; }
 	}
@@ -552,7 +555,7 @@
 					<div class="style-dot" style="background: linear-gradient(135deg, #eff6ff 50%, #1d4ed8 50%);" data-fg="#1d4ed8" data-bg="#eff6ff" title="Tech Blue"></div>
 					<div class="style-dot" style="background: linear-gradient(135deg, #fff1f2 50%, #be123c 50%);" data-fg="#be123c" data-bg="#fff1f2" title="Brand Red"></div>
 				</div>
-				<div style="display:flex; gap:12px;">
+				<div style="display:flex; flex-direction:column; gap:8px;">
 					<label class="bg-toggle-compact" title="Transparent Background">
 						<input type="checkbox" id="toggle-transparency">
 						<div class="bg-check" style="font-size:10px;">⬛</div>
@@ -994,89 +997,128 @@
 	}
 
 	// --- Export Logic ---
-	function getQrSourceElement() {
-		return (
-			els.rasterHost.querySelector("canvas") ||
-			els.rasterHost.querySelector("img") ||
-			els.qrcode.querySelector("canvas") ||
-			els.qrcode.querySelector("img")
-		);
+	function buildSafeFileName(extension) {
+		var raw = els.input.value || "";
+		var normalized = normalizeUrl(raw);
+		if (!normalized) {
+			return "qr-code." + extension;
+		}
+
+		var withoutProtocol = normalized.replace(/^https?:\/\//i, "");
+
+		var sanitize = function (value) {
+			return String(value || "")
+				.replace(/[<>:"/\\|?*\x00-\x1F]/g, "")
+				.replace(/\s+/g, "-")
+				.replace(/[^a-zA-Z0-9а-яА-ЯёЁ._-]/g, "")
+				.replace(/-+/g, "-")
+				.replace(/^[-_.]+|[-_.]+$/g, "");
+		};
+
+		var safeLink = sanitize(withoutProtocol);
+		if (!safeLink) {
+			safeLink = "qr";
+		}
+
+		var nameCore = safeLink;
+		if (safeLink.length > 20) {
+			nameCore = safeLink.slice(0, 10) + "-" + safeLink.slice(-10);
+		}
+
+		return "qr-" + nameCore + "." + extension;
 	}
 
-	function buildCanvasFromSource(sourceEl, onReady) {
-		if (!sourceEl) {
-			onReady(null);
-			return;
-		}
+	function buildExportCanvas(size, forceOpaqueForJpg) {
+		var raw = els.input.value;
+		if (!raw) return null;
 
-		if (sourceEl.tagName.toLowerCase() === "canvas") {
-			onReady(sourceEl);
-			return;
-		}
+		try {
+			var finalUrl = normalizeUrl(raw);
+			var exportCanvas = document.createElement("canvas");
+			exportCanvas.width = size;
+			exportCanvas.height = size;
+			var ctx = exportCanvas.getContext("2d");
 
-		if (sourceEl.tagName.toLowerCase() === "img") {
-			var drawImgToCanvas = function() {
-				var c = document.createElement("canvas");
-				c.width = sourceEl.naturalWidth || sourceEl.width || 1024;
-				c.height = sourceEl.naturalHeight || sourceEl.height || 1024;
-				var ctx = c.getContext("2d");
-				ctx.drawImage(sourceEl, 0, 0, c.width, c.height);
-				onReady(c);
-			};
-
-			if (sourceEl.complete && sourceEl.naturalWidth > 0) {
-				drawImgToCanvas();
+			var bg = state.bg || "#ffffff";
+			if (forceOpaqueForJpg || !state.isTransparent) {
+				ctx.fillStyle = bg;
+				ctx.fillRect(0, 0, size, size);
 			} else {
-				sourceEl.onload = drawImgToCanvas;
-				sourceEl.onerror = function() { onReady(null); };
+				ctx.clearRect(0, 0, size, size);
 			}
-			return;
-		}
 
-		onReady(null);
+			var qr = new QRCode(document.createElement("div"), {
+				text: finalUrl,
+				width: size,
+				height: size,
+				colorDark: state.fg,
+				colorLight: "#ffffff",
+				correctLevel: QRCode.CorrectLevel[state.level]
+			});
+
+			var model = qr && qr._oQRCode ? qr._oQRCode : null;
+			if (!model || typeof model.getModuleCount !== "function" || typeof model.isDark !== "function") {
+				return null;
+			}
+
+			var modules = model.getModuleCount();
+			var quietZone = 4;
+			var total = modules + quietZone * 2;
+			var cell = size / total;
+
+			ctx.fillStyle = state.fg || "#000000";
+			for (var row = 0; row < modules; row++) {
+				for (var col = 0; col < modules; col++) {
+					if (!model.isDark(row, col)) continue;
+					var x1 = Math.round((col + quietZone) * cell);
+					var y1 = Math.round((row + quietZone) * cell);
+					var x2 = Math.round((col + quietZone + 1) * cell);
+					var y2 = Math.round((row + quietZone + 1) * cell);
+					ctx.fillRect(x1, y1, Math.max(1, x2 - x1), Math.max(1, y2 - y1));
+				}
+			}
+
+			return exportCanvas;
+		} catch (e) {
+			var visibleCanvas = els.qrcode.querySelector("canvas");
+			if (visibleCanvas) {
+				var fallbackOut = document.createElement("canvas");
+				fallbackOut.width = visibleCanvas.width;
+				fallbackOut.height = visibleCanvas.height;
+				var fallbackCtx = fallbackOut.getContext("2d");
+				if (forceOpaqueForJpg || !state.isTransparent) {
+					fallbackCtx.fillStyle = state.bg || "#ffffff";
+					fallbackCtx.fillRect(0, 0, fallbackOut.width, fallbackOut.height);
+				}
+				fallbackCtx.drawImage(visibleCanvas, 0, 0);
+				return fallbackOut;
+			}
+			return null;
+		}
 	}
 
-	function downloadCanvas(canvas, mimeType, fileName, quality) {
+	function saveCanvas(canvas, mimeType, fileName, quality) {
 		if (!canvas) return;
-
-		if (canvas.toBlob) {
-			canvas.toBlob(function(blob) {
-				if (!blob) return;
-				var blobUrl = URL.createObjectURL(blob);
-				triggerDownload(blobUrl, fileName);
-				setTimeout(function() { URL.revokeObjectURL(blobUrl); }, 1000);
-			}, mimeType, quality);
-		} else {
-			var dataUrl = canvas.toDataURL(mimeType, quality);
-			triggerDownload(dataUrl, fileName);
-		}
+		var dataUrl = canvas.toDataURL(mimeType, quality);
+		triggerDownload(dataUrl, fileName);
 	}
 
 	function downloadPng() {
-		var sourceEl = getQrSourceElement();
-		buildCanvasFromSource(sourceEl, function(sourceCanvas) {
-			downloadCanvas(sourceCanvas, "image/png", "qr-code.png");
-		});
+		var canvas = buildExportCanvas(1024, false);
+		if (!canvas) {
+			alert("Не удалось сформировать PNG. Попробуйте снова.");
+			return;
+		}
+		saveCanvas(canvas, "image/png", buildSafeFileName("png"));
 	}
 
 	function downloadJpg() {
-		var sourceEl = getQrSourceElement();
-		buildCanvasFromSource(sourceEl, function(sourceCanvas) {
-			if (!sourceCanvas) return;
-
-			var outCanvas = document.createElement("canvas");
-			outCanvas.width = sourceCanvas.width;
-			outCanvas.height = sourceCanvas.height;
-			var outCtx = outCanvas.getContext("2d");
-
-			var fill = state.bg || "#ffffff";
-			if (state.isTransparent) fill = "#ffffff";
-			outCtx.fillStyle = fill;
-			outCtx.fillRect(0, 0, outCanvas.width, outCanvas.height);
-			outCtx.drawImage(sourceCanvas, 0, 0);
-
-			downloadCanvas(outCanvas, "image/jpeg", "qr-code.jpg", 0.92);
-		});
+		var canvas = buildExportCanvas(1024, true);
+		if (!canvas) {
+			alert("Не удалось сформировать JPG. Попробуйте снова.");
+			return;
+		}
+		saveCanvas(canvas, "image/jpeg", buildSafeFileName("jpg"), 0.92);
 	}
 
 	function downloadSvg() {
@@ -1099,7 +1141,7 @@
 
 		// Download SVG
 		var url = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(source);
-		triggerDownload(url, "qr-code.svg");
+		triggerDownload(url, buildSafeFileName("svg"));
 	}
 
 	function downloadPdf() {
@@ -1131,16 +1173,32 @@
 		doc.setTextColor(100);
 		doc.text("Generated by GIBDD Hub Platform", 20, 180);
 		
-		doc.save("qr-code.pdf");
+		doc.save(buildSafeFileName("pdf"));
 	}
 
 	function triggerDownload(url, name) {
 		var a = document.createElement("a");
 		a.href = url;
 		a.download = name;
+		a.rel = "noopener";
+		a.style.display = "none";
 		document.body.appendChild(a);
-		a.click();
-		document.body.removeChild(a);
+
+		try {
+			if (typeof a.download === "undefined") {
+				window.open(url, "_blank");
+			} else {
+				a.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, view: window }));
+			}
+		} catch (e) {
+			window.open(url, "_blank");
+		}
+
+		setTimeout(function() {
+			if (a.parentNode) {
+				a.parentNode.removeChild(a);
+			}
+		}, 200);
 	}
 
 	// Start
