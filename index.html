@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<title>Генератор QR-кодов | GIBDD Hub</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<!-- Libraries -->
+<script type="text/javascript" src="qrcode.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<style>
+	/* Theme Panel Removed - Fixed Dark Theme */
+	:root {
+		/* Fixed: Cyber Dark */
+		--bg-deep: #0f172a;
+		--bg-card: #1e293b;
+		--primary: #3b82f6;
+		--primary-hover: #2563eb;
+		--accent: #f59e0b;
+		--text-main: #f8fafc;
+		--text-muted: #94a3b8;
+		--border: #334155;
+		--success: #10b981;
+		--warning: #f59e0b;
+		--danger: #ef4444;
+		--primary-rgb: 59, 130, 246;
+	}
+
+	* { box-sizing: border-box; transition: background-color 0.3s, color 0.3s, border-color 0.3s; }
+
+	body {
+		font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+		margin: 0;
+		padding: 20px 10px;
+		background: var(--bg-deep);
+		color: var(--text-main);
+		line-height: 1.5;
+		min-height: 100vh;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+	}
+
+	.container {
+		width: 100%;
+		max-width: 850px;
+		background: var(--bg-card);
+		border: 1px solid var(--border);
+		border-radius: 24px;
+		padding: 30px;
+		box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+		position: relative;
+	}
+
+	header { text-align: center; margin-bottom: 30px; }
+	
+	/* Theme Panel Styles Removed */
+
+	h1 { 
+		font-size: 28px; 
+		margin: 0 0 8px; 
+		background: linear-gradient(135deg, var(--primary), var(--accent));
+		-webkit-background-clip: text;
+		-webkit-text-fill-color: transparent;
+		font-weight: 800; 
+		letter-spacing: -0.03em;
+	}
+	.subtitle { font-size: 14px; color: var(--text-muted); margin: 0; }
+
+	/* Input Section */
+	.input-group {
+		margin-bottom: 30px;
+		position: relative;
+	}
+	
+	.step-number {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 24px; height: 24px;
+		background: var(--bg-deep);
+		border: 1px solid var(--border);
+		border-radius: 50%;
+		font-size: 10px;
+		color: var(--text-muted);
+		margin-right: 8px;
+		font-weight: 700;
+	}
+
+	.input-wrapper {
+		position: relative;
+		display: flex;
+		align-items: center;
+	}
+
+	#text {
+		width: 100%;
+		padding: 18px 50px 18px 50px;
+		font-size: 16px;
+		background: var(--bg-deep);
+		border: 2px solid var(--border);
+		border-radius: 16px;
+		color: var(--text-main);
+		outline: none;
+		box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+		transition: all 0.3s;
+	}
+
+	#text:focus {
+		border-color: var(--primary);
+		box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.15);
+		background: var(--bg-card);
+	}
+
+	.status-icon-wrap {
+		position: absolute;
+		left: 18px;
+		display: flex;
+		align-items: center;
+		pointer-events: none;
+		color: var(--text-muted);
+	}
+
+	.validator-icon { font-size: 18px; opacity: 0; transition: 0.3s; transform: scale(0.5); position: absolute; }
+	.validator-icon.active { opacity: 1; transform: scale(1); color: var(--success); }
+	
+	.icon-default { font-size: 18px; transition: 0.3s; opacity: 1; }
+
+	.char-counter {
+		position: absolute;
+		right: 18px;
+		font-size: 11px;
+		color: var(--text-muted);
+		pointer-events: none;
+		background: var(--bg-card);
+		padding: 2px 8px;
+		border-radius: 6px;
+		border: 1px solid var(--border);
+	}
+
+	.dynamic-tip {
+		font-size: 12px;
+		margin-top: 8px;
+		color: var(--primary);
+		min-height: 18px;
+		padding-left: 10px;
+		opacity: 0.8;
+	}
+
+	/* Config Grid */
+	.config-grid {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 30px;
+		margin-bottom: 30px;
+	}
+
+	.section-title {
+		font-size: 10px;
+		text-transform: uppercase;
+		letter-spacing: 1.5px;
+		color: var(--text-muted);
+		margin-bottom: 15px;
+		font-weight: 700;
+		display: flex;
+		align-items: center;
+		gap: 0;
+	}
+	.section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); opacity: 0.5; margin-left: 10px; }
+
+	.toggle-row {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 12px 14px;
+		margin-bottom: 10px;
+		background: var(--bg-deep);
+		border: 1px solid var(--border);
+		border-radius: 12px;
+		cursor: pointer;
+		transition: all 0.2s;
+	}
+	.toggle-row:hover { border-color: var(--primary); transform: translateX(2px); }
+
+	.toggle-label { display: flex; flex-direction: column; }
+	.t-title { font-size: 14px; font-weight: 600; color: var(--text-main); }
+	.t-desc { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+	.toggle-switch {
+		position: relative;
+		width: 44px;
+		height: 24px;
+		background: var(--border);
+		border-radius: 20px;
+		transition: 0.3s;
+		flex-shrink: 0;
+	}
+	.toggle-switch::after {
+		content: '';
+		position: absolute;
+		top: 3px; left: 3px;
+		width: 18px; height: 18px;
+		background: white;
+		border-radius: 50%;
+		transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+		box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+	}
+	input:checked + .toggle-switch { background: var(--success); }
+	input:checked + .toggle-switch::after { transform: translateX(20px); }
+	input[type="checkbox"] { display: none; }
+
+	.segmented-control {
+		display: flex;
+		background: var(--bg-deep);
+		border: 1px solid var(--border);
+		border-radius: 14px;
+		padding: 4px;
+		width: 100%;
+	}
+	.segmented-control button {
+		flex: 1;
+		padding: 8px;
+		font-size: 12px;
+		border-radius: 10px;
+		background: transparent;
+		color: var(--text-muted);
+		font-weight: 700;
+		border: none;
+		cursor: pointer;
+		transition: all 0.2s;
+	}
+	.segmented-control button.active {
+		background: var(--bg-card);
+		color: var(--primary);
+		box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+	}
+
+	/* Result Area */
+	.result-area {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		padding: 40px;
+		background: var(--bg-deep);
+		border-radius: 24px;
+		position: relative;
+		border: 1px solid var(--border);
+		transition: all 0.3s;
+		overflow: hidden;
+		margin-top: 30px;
+	}
+	
+	.result-step-header {
+		font-size: 10px;
+		text-transform: uppercase;
+		letter-spacing: 1.5px;
+		color: var(--text-muted);
+		font-weight: 700;
+		display: flex;
+		align-items: center;
+		width: 100%;
+		margin-bottom: 25px;
+	}
+	.result-step-header::after { content: ''; flex: 1; height: 1px; background: var(--border); opacity: 0.5; margin-left: 10px; }
+
+	.result-area.drag-over { border-color: var(--accent); transform: scale(1.01); }
+
+	/* Horizontal Color Picker */
+	.qr-controls-row {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		width: 100%;
+		max-width: 320px;
+		margin-bottom: 20px;
+		background: var(--bg-card);
+		padding: 8px 16px;
+		border-radius: 20px;
+		border: 1px solid var(--border);
+	}
+
+	.qr-style-picker {
+		display: flex;
+		gap: 12px;
+	}
+
+	.style-dot {
+		width: 24px;
+		height: 24px;
+		border-radius: 50%;
+		cursor: pointer;
+		border: 1px solid var(--border);
+		transition: transform 0.2s;
+		position: relative;
+	}
+	.style-dot:hover { transform: scale(1.2); }
+	.style-dot.active { transform: scale(1.2); box-shadow: 0 0 0 2px var(--bg-deep), 0 0 0 4px var(--primary); }
+	
+	.bg-toggle-compact {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 24px; height: 24px;
+		border-radius: 6px;
+		background: var(--bg-deep);
+		border: 1px solid var(--border);
+		cursor: pointer;
+		color: var(--text-muted);
+		transition: 0.2s;
+	}
+	.bg-toggle-compact input { display: none; }
+	.bg-toggle-compact:hover { border-color: var(--primary); color: var(--primary); }
+	.bg-toggle-compact input:checked + div { color: var(--success); }
+	.bg-toggle-compact.active-toggle { background: var(--primary); border-color: var(--primary); color: white !important; }
+
+	/* Transparency Effect on Buttons */
+	.btn-highlight { 
+		border-color: var(--accent) !important; 
+		color: var(--accent) !important; 
+		box-shadow: 0 0 10px rgba(245, 158, 11, 0.2); 
+	}
+	.result-flex-container {
+		display: flex;
+		align-items: flex-start;
+		justify-content: center;
+		gap: 30px;
+		width: 100%;
+		flex-wrap: wrap;
+	}
+	
+	.color-column {
+		display: flex;
+		flex-direction: column;
+		gap: 15px;
+	}
+	
+	.download-column {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+	}
+
+	.btn-dl-side {
+		display: flex;
+		align-items: center;
+		width: 130px;
+		padding: 10px 14px;
+		background: var(--bg-card);
+		border: 1px solid var(--border);
+		border-radius: 12px;
+		color: var(--text-main);
+		font-size: 11px;
+		font-weight: 700;
+		cursor: pointer;
+		transition: all 0.2s;
+	}
+	.btn-dl-side span { margin-right: 10px; font-size: 16px; }
+	.btn-dl-side:hover {
+		background: var(--primary);
+		color: white;
+		border-color: var(--primary);
+		transform: translateX(4px);
+		box-shadow: -5px 5px 15px -5px rgba(0,0,0,0.3);
+	}
+	
+	.style-dot-large {
+		width: 36px;
+		height: 36px;
+		border-radius: 50%;
+		cursor: pointer;
+		border: 1px solid var(--border);
+		transition: transform 0.2s;
+		position: relative;
+	}
+	.style-dot-large:hover { transform: scale(1.1); }
+	.style-dot-large.active { transform: scale(1.15); box-shadow: 0 0 0 2px var(--bg-deep), 0 0 0 4px var(--primary); }
+
+	#qrcode {
+		margin-bottom: 20px;
+		border-radius: 6px; 
+		overflow: hidden;
+		transition: opacity 0.5s;
+		border: 12px solid white; 
+		background: white;
+		box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
+	}
+	#qrcode img, #qrcode svg { display: block; }
+	
+	.stress-mode #qrcode { filter: blur(3px) contrast(1.5) grayscale(1); }
+	.stress-label {
+		position: absolute;
+		top: 15px; right: 15px;
+		background: var(--danger);
+		color: white;
+		font-size: 10px; font-weight: 800;
+		padding: 4px 8px;
+		border-radius: 6px;
+		display: none;
+	}
+	.stress-mode .stress-label { display: block; }
+
+	.action-row {
+		display: grid;
+		grid-template-columns: repeat(4, 1fr);
+		gap: 12px;
+		width: 100%;
+		max-width: 480px;
+	}
+
+	.btn-dl {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		padding: 12px 6px;
+		background: var(--bg-card);
+		border: 1px solid var(--border);
+		border-radius: 14px;
+		color: var(--text-main);
+		font-size: 11px;
+		font-weight: 700;
+		cursor: pointer;
+		transition: all 0.2s;
+	}
+	.btn-dl span { margin-bottom: 6px; font-size: 20px; }
+	.btn-dl:hover {
+		background: var(--primary);
+		color: white;
+		border-color: var(--primary);
+		transform: translateY(-4px);
+		box-shadow: 0 10px 20px -5px rgba(var(--primary-rgb), 0.4);
+	}
+
+	/* Footer Info */
+	.info-footer {
+		margin-top: 40px;
+		padding-top: 30px;
+		border-top: 1px solid var(--border);
+		width: 100%;
+	}
+	.info-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+		gap: 15px;
+	}
+	.info-item {
+		background: var(--bg-deep);
+		padding: 15px;
+		border-radius: 14px;
+		border: 1px solid var(--border);
+	}
+	.info-item h3 { font-size: 13px; margin: 0 0 6px; color: var(--primary); }
+	.info-item p { font-size: 11px; color: var(--text-muted); margin: 0; line-height: 1.4; }
+
+	.lang-switcher {
+		position: absolute;
+		top: 30px;
+		right: 30px;
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		font-size: 12px;
+		font-weight: 700;
+		background: var(--bg-deep);
+		padding: 6px 10px;
+		border-radius: 20px;
+		border: 1px solid var(--border);
+		cursor: pointer;
+	}
+	.lang-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); transition: all 0.3s; }
+	.lang-active-rus .lang-dot { background: var(--success); transform: translateX(0); }
+	.lang-active-eng .lang-dot { background: var(--primary); transform: translateX(24px); }
+	.lang-active-rus span:first-of-type { color: var(--text-main); }
+	.lang-active-eng span:last-of-type { color: var(--text-main); }
+	.lang-switcher span { color: var(--text-muted); transition: 0.3s; }
+
+	.hidden { display: none !important; }
+	@media (max-width: 650px) {
+		.config-grid { grid-template-columns: 1fr; gap: 15px; }
+		.container { padding: 20px; border-radius: 0; border: none; }
+		.action-row { grid-template-columns: repeat(2, 1fr); }
+		/* .theme-panel removed */
+		.lang-switcher { top: 15px; right: 15px; }
+	}
+</style>
+</head>
+<body>
+
+<main class="container">
+	<!-- Theme Panel Removed -->
+
+	<div class="lang-switcher lang-active-rus" id="lang-toggle">
+		<span class="lang-label">RU</span>
+		<div class="lang-dot"></div>
+		<span class="lang-label">EN</span>
+	</div>
+
+	<header>
+		<h1 data-i18n="title">Генератор QR-кодов</h1>
+		<p class="subtitle" data-i18n="subtitle">Профессиональный инструмент для создания вечных QR-кодов</p>
+	</header>
+
+	<div class="input-group">
+		<div class="section-title">
+			<span class="step-number">01</span>
+			<span data-i18n="step1">ЦЕЛЕВАЯ ССЫЛКА</span>
+		</div>
+		<div class="input-wrapper">
+			<div class="status-icon-wrap">
+				<span class="validator-icon" id="validator-icon">✓</span>
+				<span class="icon-default" id="default-icon">🌐</span>
+			</div>
+			<input type="text" id="text" data-i18n-placeholder="placeholder" placeholder="yoursite.ru" autocomplete="off" spellcheck="false">
+			<div class="char-counter" id="char-counter">0</div>
+		</div>
+		<div class="dynamic-tip" id="dynamic-tip" data-i18n="tip-wait">Введите адрес сайта для начала работы...</div>
+	</div>
+
+	<div class="config-grid">
+		<div class="col-left">
+			<div class="section-title">
+				<span class="step-number">02</span>
+				<span data-i18n="step2">ОПТИМИЗАЦИЯ</span>
+			</div>
+			
+			<label class="toggle-row">
+				<div class="toggle-label">
+					<span class="t-title" data-i18n="opt-utm">Очистка UTM</span>
+					<span class="t-desc" data-i18n="opt-utm-desc">Удаляет рекламные метки</span>
+				</div>
+				<input type="checkbox" id="strip-tracking" checked>
+				<div class="toggle-switch"></div>
+			</label>
+
+			<label class="toggle-row">
+				<div class="toggle-label">
+					<span class="t-title" data-i18n="opt-https">Протокол HTTPS</span>
+					<span class="t-desc" data-i18n="opt-https-desc">Авто-исправление ссылок</span>
+				</div>
+				<input type="checkbox" id="add-protocol" checked>
+				<div class="toggle-switch"></div>
+			</label>
+		</div>
+
+		<div class="col-right">
+			<div class="section-title">
+				<span class="step-number">03</span>
+				<span data-i18n="step3">НАСТРОЙКИ</span>
+			</div>
+
+			<div style="margin-bottom: 20px;">
+				<div class="segmented-control" id="complexity-selector">
+					<button data-level="L">L</button>
+					<button data-level="M">M</button>
+					<button data-level="Q">Q</button>
+					<button data-level="H" class="active">H</button>
+				</div>
+				<div style="font-size: 10px; color: var(--text-muted); margin-top: 6px; text-align: center;" id="complexity-desc">
+					<span data-i18n="complex-info">Уровень H (30%)</span>
+				</div>
+			</div>
+			
+			<!-- Moved Transparency & Stress to QR visual step -->
+		</div>
+	</div>
+
+	<div class="result-area hidden">
+		<div class="result-step-header">
+			<span class="step-number">04</span>
+			<span data-i18n="step4">ВИЗУАЛ И ЭКСПОРТ</span>
+		</div>
+
+		<div class="stress-label">SCAN SIMULATION MODE</div>
+		
+		<!-- Visual Controls -->
+		<div class="qr-controls-row">
+			<div class="qr-style-picker">
+				<!-- High Contrast Pairs -->
+				<div class="style-dot active" style="background: linear-gradient(135deg, white 50%, black 50%);" data-fg="#000000" data-bg="#ffffff" title="Classic Mono"></div>
+				<div class="style-dot" style="background: linear-gradient(135deg, #1e293b 50%, #facc15 50%);" data-fg="#facc15" data-bg="#1e293b" title="Cyber Yellow (Dark)"></div>
+				<div class="style-dot" style="background: linear-gradient(135deg, #f0fdf4 50%, #15803d 50%);" data-fg="#15803d" data-bg="#f0fdf4" title="Eco Green"></div>
+				<div class="style-dot" style="background: linear-gradient(135deg, #eff6ff 50%, #1d4ed8 50%);" data-fg="#1d4ed8" data-bg="#eff6ff" title="Tech Blue"></div>
+				<div class="style-dot" style="background: linear-gradient(135deg, #fff1f2 50%, #be123c 50%);" data-fg="#be123c" data-bg="#fff1f2" title="Brand Red"></div>
+			</div>
+			
+			<div style="display:flex; gap:12px; border-left: 1px solid var(--border); padding-left:12px;">
+				<label class="bg-toggle-compact" title="Transparent Background">
+					<input type="checkbox" id="toggle-transparency">
+					<div class="bg-check" style="font-size:10px;">⬛</div>
+				</label>
+				<label class="bg-toggle-compact" title="Simulation Mode">
+					<input type="checkbox" id="toggle-stress">
+					<div class="bg-check" style="font-size:10px;">⚠️</div>
+				</label>
+			</div>
+		</div>
+
+		<div id="qrcode"></div>
+		
+		<div class="action-row">
+			<button class="btn-dl" id="download-png" title="Raster image, great for web/social"><span>🖼️</span> PNG</button>
+			<button class="btn-dl" id="download-jpg" title="Common image format, white background"><span>📸</span> JPG</button>
+			<button class="btn-dl" id="download-svg" title="Vector graphics, infinite scaling for print"><span>✏️</span> SVG</button>
+			<button class="btn-dl" id="download-pdf" title="Document format for sharing/printing"><span>📄</span> PDF</button>
+		</div>
+		
+		<div style="margin-top:20px; font-size: 11px; color: var(--text-muted); display: grid; gap: 8px;">
+			<div style="display:flex; gap:8px; align-items:center;">
+				<span style="font-weight:bold; color:var(--primary);">PNG/JPG</span> 
+				<span data-i18n="exp-raster">Для соцсетей, презентаций и быстрой отправки.</span>
+			</div>
+			<div style="display:flex; gap:8px; align-items:center;">
+				<span style="font-weight:bold; color:var(--primary);">SVG/PDF</span> 
+				<span data-i18n="exp-vector">Векторный формат. Идеально для типографии, билбордов и печати любого размера.</span>
+			</div>
+		</div>
+	</div>
+
+	<footer class="info-footer">
+		<div class="info-grid">
+			<div class="info-item">
+				<h3 data-i18n="f1-t">Надежность</h3>
+				<p data-i18n="f1-p">Прямое кодирование без редиректов. Код работает вечно, пока жив ваш домен.</p>
+			</div>
+			<div class="info-item">
+				<h3 data-i18n="f2-t">SVG Вектор</h3>
+				<p data-i18n="f2-p">Профессиональный формат для типографии. Растягивается до размера билборда.</p>
+			</div>
+			<div class="info-item">
+				<h3 data-i18n="f3-t">Приватность</h3>
+				<p data-i18n="f4-p">Генерация происходит прямо в браузере. Данные не отправляются на сервер.</p>
+			</div>
+		</div>
+		<div style="text-align: center; margin-top: 30px; font-size: 10px; color: var(--text-muted); opacity: 0.5;">
+			ENGINEERED BY <a href="#" style="color: inherit; text-decoration: none; border-bottom: 1px solid var(--border);">HEDGENIOUS</a>
+		</div>
+	</footer>
+
+	<!-- Hidden hosts -->
+	<div id="svg-host" style="display:none;"></div>
+</main>
+
+<script type="text/javascript">
+(function () {
+	// --- Elements ---
+	var els = {
+		input: document.getElementById("text"),
+		counter: document.getElementById("char-counter"),
+		tip: document.getElementById("dynamic-tip"),
+		validator: document.getElementById("validator-icon"),
+		defaultIcon: document.getElementById("default-icon"),
+		resultArea: document.querySelector(".result-area"),
+		qrcode: document.getElementById("qrcode"),
+		svgHost: document.getElementById("svg-host"),
+		
+		// Toggles
+		stripTracking: document.getElementById("strip-tracking"),
+		addProtocol: document.getElementById("add-protocol"),
+		transparency: document.getElementById("toggle-transparency"),
+		stress: document.getElementById("toggle-stress"),
+		
+		// Controls
+		complexBtns: document.querySelectorAll("#complexity-selector button"),
+		complexDesc: document.getElementById("complexity-desc"),
+		// Theme Dots removed
+		colorDots: document.querySelectorAll(".style-dot"),
+		// customColor removed
+		langToggle: document.getElementById("lang-toggle"),
+		
+		// Badges
+		// badgeEcc: document.getElementById("complexity-badge"), // Removed
+		complexInfoTxt: document.querySelector("[data-i18n='complex-info']"),
+		
+		// DL
+		dlPng: document.getElementById("download-png"),
+		dlJpg: document.getElementById("download-jpg"),
+		dlSvg: document.getElementById("download-svg"),
+		dlPdf: document.getElementById("download-pdf")
+	};
+
+	// --- State ---
+	var state = {
+		text: "",
+		level: "H",
+		fg: "#000000",
+		bg: "#ffffff",
+		isTransparent: false,
+		lang: "RU"
+	};
+
+	var translations = {
+		RU: {
+			title: "Генератор QR-кодов",
+			subtitle: "Профессиональный инструмент для создания вечных QR-кодов",
+			step1: "ЦЕЛЕВАЯ ССЫЛКА",
+			placeholder: "yoursite.ru",
+			tip_wait: "Введите адрес сайта для начала работы...",
+			tip_ok: "✨ Отличная ссылка. Код готов к скачиванию.",
+			tip_long: "💡 Ссылка длинная. Рекомендуем сократить UTM метки.",
+			step2: "ОПТИМИЗАЦИЯ",
+			opt_utm: "Очистка UTM",
+			opt_utm_desc: "Удаляет рекламные метки",
+			opt_https: "Протокол HTTPS",
+			opt_https_desc: "Авто-исправление ссылок",
+			step3: "НАСТРОЙКИ",
+			opt_trans: "Прозрачный фон",
+			opt_trans_desc: "Идеально для дизайна",
+			stress_desc: "Симуляция плохих условий",
+			f1_t: "Надежность",
+			f1_p: "Прямое кодирование без редиректов. Код работает вечно.",
+			f2_t: "SVG Вектор",
+			f2_p: "Профессиональный формат для типографии.",
+			f4_t: "Приватность",
+			f4_p: "Генерация происходит в браузере. Приватно.",
+			complex_h: "Максимальная надежность (30%)",
+			exp_raster: "Для соцсетей, презентаций и быстрой отправки.",
+			exp_vector: "Векторный формат. Идеально для типографии, билбордов и печати любого размера.",
+			complex_info: "Уровень коррекции ошибок (H) 30% — QR читается даже при 30% повреждений.",
+			opt_trans_short: "Вкл. прозрачность"
+		},
+		EN: {
+			title: "QR Code Generator",
+			subtitle: "Professional tool for eternal QR links",
+			step1: "TARGET URL",
+			placeholder: "yoursite.com",
+			tip_wait: "Enter URL to start generating...",
+			tip_ok: "✨ Perfect link. QR Code is ready.",
+			tip_long: "💡 URL is long. Consider removing tracking tags.",
+			step2: "OPTIMIZATION",
+			opt_utm: "Clean UTM",
+			opt_utm_desc: "Removes tracking tags",
+			opt_https: "Enforce HTTPS",
+			opt_https_desc: "Auto-fix protocol",
+			step3: "SETTINGS",
+			opt_trans: "Transparent BG",
+			opt_trans_desc: "Best for design overlays",
+			stress_desc: "Simulate print damage",
+			f1_t: "Reliability",
+			f1_p: "Direct coding. No redirects. Works forever.",
+			f2_t: "Vector SVG",
+			f2_p: "Professional print format. Infinite scaling.",
+			f4_t: "Privacy",
+			f4_p: "Client-side generation. 100% Private.",
+			complex_h: "Max Reliability (30%)",
+			exp_raster: "Best for social media, screens, and quick sharing.",
+			exp_vector: "Vector format. Perfect for print, billboards, and scaling.",
+			complex_info: "Error Correction Level (H) 30% — QR remains readable with 30% damage.",
+			opt_trans_short: "Transparency"
+		}
+	};
+
+	// --- Init ---
+	function init() {
+		setupListeners();
+		// Set default URL if empty
+		if(!els.input.value) {
+			els.input.value = "https://gibdd.ru";
+			handleInput();
+		}
+		updateLang();
+	}
+
+	function setupListeners() {
+		// Auto-generate on any input
+		els.input.addEventListener("input", handleInput);
+		
+		// Config Toggles
+		[els.stripTracking, els.addProtocol, els.transparency, els.stress].forEach(function(el) {
+			el.addEventListener("change", generate);
+		});
+
+		// Complexity
+		els.complexBtns.forEach(function(btn) {
+			btn.addEventListener("click", function() {
+				els.complexBtns.forEach(function(b) { b.classList.remove("active"); });
+				btn.classList.add("active");
+				state.level = btn.getAttribute("data-level");
+				generate();
+			});
+		});
+
+		// Theme Dot logic removed
+
+		// QR Color
+		els.colorDots.forEach(function(dot) {
+			dot.addEventListener("click", function() {
+				els.colorDots.forEach(function(d) { d.classList.remove("active"); });
+				dot.classList.add("active");
+				state.fg = dot.getAttribute("data-fg");
+				state.bg = dot.getAttribute("data-bg");
+				
+				// Optional: Update QR code bg color visually in container
+				if(state.bg !== "#ffffff") {
+					els.qrcode.style.backgroundColor = state.bg;
+					els.qrcode.style.borderColor = state.bg;
+				} else {
+					els.qrcode.style.backgroundColor = "white";
+					els.qrcode.style.borderColor = "white";
+				}
+				
+				generate();
+			});
+		});
+
+		// els.customColor removed
+
+		// Lang
+		els.langToggle.addEventListener("click", function() {
+			state.lang = state.lang === "RU" ? "EN" : "RU";
+			els.langToggle.className = "lang-switcher lang-active-" + state.lang.toLowerCase();
+			updateLang();
+		});
+
+		// Downloads
+		els.dlPng.addEventListener("click", downloadPng);
+		els.dlJpg.addEventListener("click", downloadJpg);
+		els.dlSvg.addEventListener("click", downloadSvg);
+		els.dlPdf.addEventListener("click", downloadPdf);
+	}
+
+	function handleInput() {
+		var val = els.input.value;
+		els.counter.textContent = val.length;
+		
+		if (val.length > 0) {
+			els.validator.classList.add("active");
+			els.defaultIcon.style.opacity = "0";
+			els.resultArea.classList.remove("hidden");
+			generate();
+		} else {
+			els.validator.classList.remove("active");
+			els.defaultIcon.style.opacity = "1";
+			els.resultArea.classList.add("hidden");
+			var dict = translations[state.lang];
+			els.tip.textContent = dict.tip_wait;
+			els.tip.style.color = "var(--primary)";
+		}
+	}
+
+	function normalizeUrl(url) {
+		if (!url) return "";
+		
+		// Add Protocol
+		if (els.addProtocol.checked && !/^https?:\/\//i.test(url)) {
+			url = "https://" + url;
+		}
+
+		try {
+			var urlObj = new URL(url);
+			
+			// Strip Tracking
+			if (els.stripTracking.checked) {
+				var params = urlObj.searchParams;
+				["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "fbclid", "gclid"].forEach(function(p) {
+					params.delete(p);
+				});
+			}
+
+			// return urlObj.toString(); // Full URL
+			// For robustness, sometimes we might want to return urlObj.href
+			return urlObj.href;
+		} catch (e) {
+			return url;
+		}
+	}
+
+	function generate() {
+		var raw = els.input.value;
+		if (!raw) return;
+
+		var finalUrl = normalizeUrl(raw);
+		state.isTransparent = els.transparency.checked;
+		
+		// Highlight Logic
+		if(state.isTransparent) {
+			els.dlSvg.classList.add("btn-highlight");
+			els.dlPdf.classList.add("btn-highlight");
+			// Visual cue on toggle
+			els.transparency.parentElement.classList.add("active-toggle");
+		} else {
+			els.dlSvg.classList.remove("btn-highlight");
+			els.dlPdf.classList.remove("btn-highlight");
+			els.transparency.parentElement.classList.remove("active-toggle");
+		}
+
+		if(els.stress.checked) {
+			els.stress.parentElement.classList.add("active-toggle");
+		} else {
+			els.stress.parentElement.classList.remove("active-toggle");
+		}
+
+		// Canvas Generation (Display)
+		els.qrcode.innerHTML = "";
+		// Even if transparent, we draw white on canvas for visibility
+		// But in JS, we can use bg color from state if provided
+		var displayBg = state.bg || "#ffffff";
+		var displayFg = state.fg; 
+
+		// Override for display if transparent is checked - still need visible background in UI?
+		// User said: "default black and white, enable transparency... vector format highlighted"
+		// If transparent, we might want to show a checkerboard in UI? 
+		// For now, let's keep it clean white in UI but apply transparency to export.
+		// Or better: Apply the chosen BG color.
+		
+		// If custom pair selected, use it.
+		
+		new QRCode(els.qrcode, {
+			text: finalUrl,
+			width: 256,
+			height: 256,
+			colorDark: displayFg,
+			colorLight: displayBg,
+			correctLevel: QRCode.CorrectLevel[state.level]
+		});
+
+		// Background SVG Generation (For Export)
+		els.svgHost.innerHTML = "";
+		// Logic for transparency export:
+		// If Transparent is checked, use "transparent" colorLight.
+		// Else use selected BG.
+		var exportBg = state.isTransparent ? "rgba(0,0,0,0)" : displayBg;
+
+		new QRCode(els.svgHost, {
+			text: finalUrl,
+			width: 1024,
+			height: 1024,
+			colorDark: displayFg,
+			colorLight: exportBg,
+			correctLevel: QRCode.CorrectLevel[state.level],
+			useSVG: true
+		});
+		
+		// Styling updates
+		if (els.stress.checked) {
+			document.body.classList.add("stress-mode");
+		} else {
+			document.body.classList.remove("stress-mode");
+		}
+
+		// Update Tip
+		var dict = translations[state.lang];
+		if (finalUrl.length > 60) {
+			els.tip.textContent = dict.tip_long;
+			els.tip.style.color = "var(--warning)";
+		} else {
+			els.tip.textContent = dict.tip_ok;
+			els.tip.style.color = "var(--success)";
+		}
+		
+		// Update complexity info text based on level
+		var infoMap = {
+			L: (state.lang === "RU" ? "Низкая (7%) — Хорошо для экранов." : "Low (7%) — Good for screens."),
+			M: (state.lang === "RU" ? "Средняя (15%) — Стандарт." : "Medium (15%) — Standard."),
+			Q: (state.lang === "RU" ? "Высокая (25%) — Для печати." : "Quality (25%) — For print."),
+			H: (state.lang === "RU" ? "Максимальная (30%) — QR читается даже при 30% повреждений." : "Max (30%) — QR remains readable with 30% damage.")
+		};
+		if(els.complexInfoTxt) els.complexInfoTxt.textContent = infoMap[state.level];
+	}
+
+	function updateLang() {
+		var dict = translations[state.lang];
+		
+		// Static text updates
+		document.querySelectorAll("[data-i18n]").forEach(function(el) {
+			var k = el.getAttribute("data-i18n");
+			// Map keys like "opt-utm" to "opt_utm"
+			var cleanK = k.replace(/-/g, "_"); 
+			if (dict[cleanK]) el.textContent = dict[cleanK];
+			if (dict[k]) el.textContent = dict[k]; 
+		});
+
+		document.querySelectorAll("[data-i18n-placeholder]").forEach(function(el) {
+			el.placeholder = dict.placeholder;
+		});
+
+		if (els.input.value) handleInput();
+		else els.tip.textContent = dict.tip_wait;
+	}
+
+	// --- Export Logic ---
+	function downloadPng() {
+		var img = els.qrcode.querySelector("img");
+		var cvs = els.qrcode.querySelector("canvas");
+		
+		// Priority: If canvas exists, use it.
+		if (cvs) {
+			triggerDownload(cvs.toDataURL("image/png"), "qr-code.png");
+		} else if (img && img.src) {
+			triggerDownload(img.src, "qr-code.png");
+		}
+	}
+
+	function downloadJpg() {
+		var img = els.qrcode.querySelector("img");
+		var cvs = els.qrcode.querySelector("canvas");
+		
+		var sourceCanvas;
+		
+		if (cvs) {
+			sourceCanvas = cvs;
+		} else if (img) {
+			// If we only have an img (qrcode.js fallback), we must draw it to a canvas first
+			sourceCanvas = document.createElement("canvas");
+			sourceCanvas.width = img.naturalWidth || 256;
+			sourceCanvas.height = img.naturalHeight || 256;
+			var ctx = sourceCanvas.getContext("2d");
+			ctx.drawImage(img, 0, 0);
+		} else {
+			return; // No source
+		}
+
+		var tmpCanvas = document.createElement("canvas");
+		tmpCanvas.width = sourceCanvas.width;
+		tmpCanvas.height = sourceCanvas.height;
+		var tCtx = tmpCanvas.getContext("2d");
+		
+		// Fill background (white default or custom)
+		var fill = state.bg || "#ffffff";
+		if (state.isTransparent) fill = "#ffffff"; 
+		
+		tCtx.fillStyle = fill;
+		tCtx.fillRect(0,0, tmpCanvas.width, tmpCanvas.height);
+		tCtx.drawImage(sourceCanvas, 0, 0);
+		
+		triggerDownload(tmpCanvas.toDataURL("image/jpeg", 0.9), "qr-code.jpg");
+	}
+
+	function downloadSvg() {
+		var svg = els.svgHost.querySelector("svg");
+		if (!svg) return;
+		
+		var serializer = new XMLSerializer();
+		
+		// If custom background, we should probably insert a rect if it's not transparent
+		// But qrcode.js with useSVG:true usually creates a rect for bg if colorLight is set.
+		// However, my updated generate() logic sets colorLight to 'transparent' if toggle on,
+		// or state.bg otherwise.
+		
+		var source = serializer.serializeToString(svg);
+		
+		// Ensure XML declaration
+		if (!source.match(/^<\?xml/)) {
+			source = '<?xml version="1.0" standalone="no"?>\r\n' + source;
+		}
+
+		// Download SVG
+		var url = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(source);
+		triggerDownload(url, "qr-code.svg");
+	}
+
+	function downloadPdf() {
+		var { jsPDF } = window.jspdf;
+		var doc = new jsPDF();
+		
+		var cvs = els.qrcode.querySelector("canvas");
+		var imgData = "";
+		if (cvs) {
+			// Ensure it has white bg for PDF
+			var temp = document.createElement("canvas");
+			temp.width = cvs.width;
+			temp.height = cvs.height;
+			var tctx = temp.getContext("2d");
+			tctx.fillStyle = "#ffffff";
+			tctx.fillRect(0,0, temp.width, temp.height);
+			tctx.drawImage(cvs, 0, 0);
+			imgData = temp.toDataURL("image/jpeg");
+		}
+
+		doc.setFontSize(22);
+		doc.text("QR Code Link", 20, 30);
+		doc.setFontSize(12);
+		doc.text(els.input.value.substring(0, 40) + "...", 20, 40);
+		
+		if(imgData) doc.addImage(imgData, 'JPEG', 50, 50, 100, 100);
+		
+		doc.setFontSize(10);
+		doc.setTextColor(100);
+		doc.text("Generated by GIBDD Hub Platform", 20, 180);
+		
+		doc.save("qr-code.pdf");
+	}
+
+	function triggerDownload(url, name) {
+		var a = document.createElement("a");
+		a.href = url;
+		a.download = name;
+		document.body.appendChild(a);
+		a.click();
+		document.body.removeChild(a);
+	}
+
+	// Start
+	init();
+
+})();
+</script>
+</body>
+</html>
