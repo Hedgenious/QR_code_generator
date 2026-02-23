@@ -264,23 +264,34 @@
 
 	.result-area.drag-over { border-color: var(--accent); transform: scale(1.01); }
 
-	/* Horizontal Color Picker */
-	.qr-controls-row {
-		display: flex;
+	/* QR Main Layout */
+	.qr-main-layout {
+		display: grid;
+		grid-template-columns: auto auto auto;
 		align-items: center;
-		justify-content: space-between;
+		gap: 20px;
 		width: 100%;
-		max-width: 320px;
+		max-width: 760px;
 		margin-bottom: 20px;
-		background: var(--bg-card);
-		padding: 8px 16px;
-		border-radius: 20px;
-		border: 1px solid var(--border);
 	}
 
 	.qr-style-picker {
 		display: flex;
+		gap: 10px;
+		flex-wrap: wrap;
+		justify-content: center;
+	}
+
+	.qr-left-controls {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
 		gap: 12px;
+		min-width: 0;
+		background: var(--bg-card);
+		padding: 10px;
+		border-radius: 14px;
+		border: 1px solid var(--border);
 	}
 
 	.style-dot {
@@ -318,68 +329,24 @@
 		color: var(--accent) !important; 
 		box-shadow: 0 0 10px rgba(245, 158, 11, 0.2); 
 	}
-	.result-flex-container {
-		display: flex;
-		align-items: flex-start;
-		justify-content: center;
-		gap: 30px;
-		width: 100%;
-		flex-wrap: wrap;
-	}
-	
-	.color-column {
-		display: flex;
-		flex-direction: column;
-		gap: 15px;
-	}
-	
-	.download-column {
-		display: flex;
-		flex-direction: column;
-		gap: 10px;
-	}
-
-	.btn-dl-side {
-		display: flex;
-		align-items: center;
-		width: 130px;
-		padding: 10px 14px;
-		background: var(--bg-card);
-		border: 1px solid var(--border);
-		border-radius: 12px;
-		color: var(--text-main);
+	.complexity-info {
+		margin-top: 15px;
 		font-size: 11px;
-		font-weight: 700;
-		cursor: pointer;
-		transition: all 0.2s;
+		color: var(--text-muted);
+		background: rgba(59, 130, 246, 0.1);
+		padding: 8px 12px;
+		border-radius: 8px;
+		border: 1px solid rgba(59, 130, 246, 0.2);
+		text-align: center;
+		max-width: 320px;
 	}
-	.btn-dl-side span { margin-right: 10px; font-size: 16px; }
-	.btn-dl-side:hover {
-		background: var(--primary);
-		color: white;
-		border-color: var(--primary);
-		transform: translateX(4px);
-		box-shadow: -5px 5px 15px -5px rgba(0,0,0,0.3);
-	}
-	
-	.style-dot-large {
-		width: 36px;
-		height: 36px;
-		border-radius: 50%;
-		cursor: pointer;
-		border: 1px solid var(--border);
-		transition: transform 0.2s;
-		position: relative;
-	}
-	.style-dot-large:hover { transform: scale(1.1); }
-	.style-dot-large.active { transform: scale(1.15); box-shadow: 0 0 0 2px var(--bg-deep), 0 0 0 4px var(--primary); }
 
 	#qrcode {
-		margin-bottom: 20px;
-		border-radius: 6px; 
+		margin-bottom: 15px;
+		border-radius: 6px; /* Sharper corners for QR */
 		overflow: hidden;
 		transition: opacity 0.5s;
-		border: 12px solid white; 
+		border: 12px solid white; /* More whitespace */
 		background: white;
 		box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
 	}
@@ -400,10 +367,13 @@
 
 	.action-row {
 		display: grid;
-		grid-template-columns: repeat(4, 1fr);
-		gap: 12px;
-		width: 100%;
-		max-width: 480px;
+		grid-template-columns: repeat(2, 1fr);
+		gap: 10px;
+		width: 240px;
+		background: var(--bg-card);
+		padding: 10px;
+		border-radius: 14px;
+		border: 1px solid var(--border);
 	}
 
 	.btn-dl {
@@ -477,6 +447,8 @@
 	@media (max-width: 650px) {
 		.config-grid { grid-template-columns: 1fr; gap: 15px; }
 		.container { padding: 20px; border-radius: 0; border: none; }
+		.qr-main-layout { grid-template-columns: 1fr; }
+		.qr-left-controls, .action-row { width: 100%; }
 		.action-row { grid-template-columns: repeat(2, 1fr); }
 		/* .theme-panel removed */
 		.lang-switcher { top: 15px; right: 15px; }
@@ -571,36 +543,35 @@
 
 		<div class="stress-label">SCAN SIMULATION MODE</div>
 		
-		<!-- Visual Controls -->
-		<div class="qr-controls-row">
-			<div class="qr-style-picker">
-				<!-- High Contrast Pairs -->
-				<div class="style-dot active" style="background: linear-gradient(135deg, white 50%, black 50%);" data-fg="#000000" data-bg="#ffffff" title="Classic Mono"></div>
-				<div class="style-dot" style="background: linear-gradient(135deg, #1e293b 50%, #facc15 50%);" data-fg="#facc15" data-bg="#1e293b" title="Cyber Yellow (Dark)"></div>
-				<div class="style-dot" style="background: linear-gradient(135deg, #f0fdf4 50%, #15803d 50%);" data-fg="#15803d" data-bg="#f0fdf4" title="Eco Green"></div>
-				<div class="style-dot" style="background: linear-gradient(135deg, #eff6ff 50%, #1d4ed8 50%);" data-fg="#1d4ed8" data-bg="#eff6ff" title="Tech Blue"></div>
-				<div class="style-dot" style="background: linear-gradient(135deg, #fff1f2 50%, #be123c 50%);" data-fg="#be123c" data-bg="#fff1f2" title="Brand Red"></div>
+		<div class="qr-main-layout">
+			<div class="qr-left-controls">
+				<div class="qr-style-picker">
+					<div class="style-dot active" style="background: linear-gradient(135deg, white 50%, black 50%);" data-fg="#000000" data-bg="#ffffff" title="Classic Mono"></div>
+					<div class="style-dot" style="background: linear-gradient(135deg, #1e293b 50%, #facc15 50%);" data-fg="#facc15" data-bg="#1e293b" title="Cyber Yellow (Dark)"></div>
+					<div class="style-dot" style="background: linear-gradient(135deg, #f0fdf4 50%, #15803d 50%);" data-fg="#15803d" data-bg="#f0fdf4" title="Eco Green"></div>
+					<div class="style-dot" style="background: linear-gradient(135deg, #eff6ff 50%, #1d4ed8 50%);" data-fg="#1d4ed8" data-bg="#eff6ff" title="Tech Blue"></div>
+					<div class="style-dot" style="background: linear-gradient(135deg, #fff1f2 50%, #be123c 50%);" data-fg="#be123c" data-bg="#fff1f2" title="Brand Red"></div>
+				</div>
+				<div style="display:flex; gap:12px;">
+					<label class="bg-toggle-compact" title="Transparent Background">
+						<input type="checkbox" id="toggle-transparency">
+						<div class="bg-check" style="font-size:10px;">⬛</div>
+					</label>
+					<label class="bg-toggle-compact" title="Simulation Mode">
+						<input type="checkbox" id="toggle-stress">
+						<div class="bg-check" style="font-size:10px;">⚠️</div>
+					</label>
+				</div>
 			</div>
-			
-			<div style="display:flex; gap:12px; border-left: 1px solid var(--border); padding-left:12px;">
-				<label class="bg-toggle-compact" title="Transparent Background">
-					<input type="checkbox" id="toggle-transparency">
-					<div class="bg-check" style="font-size:10px;">⬛</div>
-				</label>
-				<label class="bg-toggle-compact" title="Simulation Mode">
-					<input type="checkbox" id="toggle-stress">
-					<div class="bg-check" style="font-size:10px;">⚠️</div>
-				</label>
-			</div>
-		</div>
 
-		<div id="qrcode"></div>
-		
-		<div class="action-row">
-			<button class="btn-dl" id="download-png" title="Raster image, great for web/social"><span>🖼️</span> PNG</button>
-			<button class="btn-dl" id="download-jpg" title="Common image format, white background"><span>📸</span> JPG</button>
-			<button class="btn-dl" id="download-svg" title="Vector graphics, infinite scaling for print"><span>✏️</span> SVG</button>
-			<button class="btn-dl" id="download-pdf" title="Document format for sharing/printing"><span>📄</span> PDF</button>
+			<div id="qrcode"></div>
+
+			<div class="action-row">
+				<button class="btn-dl" id="download-png" title="Raster image, great for web/social"><span>🖼️</span> PNG</button>
+				<button class="btn-dl" id="download-jpg" title="Common image format, white background"><span>📸</span> JPG</button>
+				<button class="btn-dl" id="download-svg" title="Vector graphics, infinite scaling for print"><span>✏️</span> SVG</button>
+				<button class="btn-dl" id="download-pdf" title="Document format for sharing/printing"><span>📄</span> PDF</button>
+			</div>
 		</div>
 		
 		<div style="margin-top:20px; font-size: 11px; color: var(--text-muted); display: grid; gap: 8px;">
@@ -631,12 +602,13 @@
 			</div>
 		</div>
 		<div style="text-align: center; margin-top: 30px; font-size: 10px; color: var(--text-muted); opacity: 0.5;">
-			ENGINEERED BY <a href="#" style="color: inherit; text-decoration: none; border-bottom: 1px solid var(--border);">HEDGENIOUS</a>
+			ENGINEERED BY <a href="https://github.com/Hedgenious" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: none; border-bottom: 1px solid var(--border);">HEDGENIOUS</a>
 		</div>
 	</footer>
 
 	<!-- Hidden hosts -->
 	<div id="svg-host" style="display:none;"></div>
+	<div id="raster-host" style="display:none;"></div>
 </main>
 
 <script type="text/javascript">
@@ -651,6 +623,7 @@
 		resultArea: document.querySelector(".result-area"),
 		qrcode: document.getElementById("qrcode"),
 		svgHost: document.getElementById("svg-host"),
+		rasterHost: document.getElementById("raster-host"),
 		
 		// Toggles
 		stripTracking: document.getElementById("strip-tracking"),
@@ -696,6 +669,10 @@
 			tip_wait: "Введите адрес сайта для начала работы...",
 			tip_ok: "✨ Отличная ссылка. Код готов к скачиванию.",
 			tip_long: "💡 Ссылка длинная. Рекомендуем сократить UTM метки.",
+			tip_space: "⚠️ В ссылке есть пробелы — они будут удалены автоматически.",
+			tip_invalid_chars: "⛔ В ссылке есть недопустимые символы: < > \" ` \\ | ^ [ ]",
+			tip_missing_domain: "⚠️ Похоже, в ссылке нет домена (пример: site.ru).",
+			tip_http: "ℹ️ Будет автоматически добавлен https://",
 			step2: "ОПТИМИЗАЦИЯ",
 			opt_utm: "Очистка UTM",
 			opt_utm_desc: "Удаляет рекламные метки",
@@ -725,6 +702,10 @@
 			tip_wait: "Enter URL to start generating...",
 			tip_ok: "✨ Perfect link. QR Code is ready.",
 			tip_long: "💡 URL is long. Consider removing tracking tags.",
+			tip_space: "⚠️ URL contains spaces — they will be removed automatically.",
+			tip_invalid_chars: "⛔ URL contains invalid characters: < > \" ` \\ | ^ [ ]",
+			tip_missing_domain: "⚠️ URL seems to have no domain (example: site.com).",
+			tip_http: "ℹ️ https:// will be added automatically",
 			step2: "OPTIMIZATION",
 			opt_utm: "Clean UTM",
 			opt_utm_desc: "Removes tracking tags",
@@ -836,8 +817,38 @@
 		}
 	}
 
+	function getInputTip(rawInput, normalizedUrl) {
+		var dict = translations[state.lang];
+		if (!rawInput) {
+			return { text: dict.tip_wait, color: "var(--primary)" };
+		}
+
+		if (/\s/.test(rawInput)) {
+			return { text: dict.tip_space, color: "var(--warning)" };
+		}
+
+		if (/[<>"`\\|^\[\]]/.test(rawInput)) {
+			return { text: dict.tip_invalid_chars, color: "var(--danger)" };
+		}
+
+		if (!/[a-zA-Z0-9-]+\.[a-zA-Z]{2,}/.test(rawInput)) {
+			return { text: dict.tip_missing_domain, color: "var(--warning)" };
+		}
+
+		if (els.addProtocol.checked && !/^https?:\/\//i.test(rawInput)) {
+			return { text: dict.tip_http, color: "var(--primary)" };
+		}
+
+		if (normalizedUrl.length > 60) {
+			return { text: dict.tip_long, color: "var(--warning)" };
+		}
+
+		return { text: dict.tip_ok, color: "var(--success)" };
+	}
+
 	function normalizeUrl(url) {
 		if (!url) return "";
+		url = url.trim().replace(/\s+/g, "");
 		
 		// Add Protocol
 		if (els.addProtocol.checked && !/^https?:\/\//i.test(url)) {
@@ -928,6 +939,17 @@
 			correctLevel: QRCode.CorrectLevel[state.level],
 			useSVG: true
 		});
+
+		// Hidden Raster Generation (For PNG/JPG export reliability)
+		els.rasterHost.innerHTML = "";
+		new QRCode(els.rasterHost, {
+			text: finalUrl,
+			width: 1024,
+			height: 1024,
+			colorDark: displayFg,
+			colorLight: exportBg,
+			correctLevel: QRCode.CorrectLevel[state.level]
+		});
 		
 		// Styling updates
 		if (els.stress.checked) {
@@ -937,14 +959,9 @@
 		}
 
 		// Update Tip
-		var dict = translations[state.lang];
-		if (finalUrl.length > 60) {
-			els.tip.textContent = dict.tip_long;
-			els.tip.style.color = "var(--warning)";
-		} else {
-			els.tip.textContent = dict.tip_ok;
-			els.tip.style.color = "var(--success)";
-		}
+		var tip = getInputTip(raw, finalUrl);
+		els.tip.textContent = tip.text;
+		els.tip.style.color = tip.color;
 		
 		// Update complexity info text based on level
 		var infoMap = {
@@ -977,51 +994,89 @@
 	}
 
 	// --- Export Logic ---
-	function downloadPng() {
-		var img = els.qrcode.querySelector("img");
-		var cvs = els.qrcode.querySelector("canvas");
-		
-		// Priority: If canvas exists, use it.
-		if (cvs) {
-			triggerDownload(cvs.toDataURL("image/png"), "qr-code.png");
-		} else if (img && img.src) {
-			triggerDownload(img.src, "qr-code.png");
+	function getQrSourceElement() {
+		return (
+			els.rasterHost.querySelector("canvas") ||
+			els.rasterHost.querySelector("img") ||
+			els.qrcode.querySelector("canvas") ||
+			els.qrcode.querySelector("img")
+		);
+	}
+
+	function buildCanvasFromSource(sourceEl, onReady) {
+		if (!sourceEl) {
+			onReady(null);
+			return;
+		}
+
+		if (sourceEl.tagName.toLowerCase() === "canvas") {
+			onReady(sourceEl);
+			return;
+		}
+
+		if (sourceEl.tagName.toLowerCase() === "img") {
+			var drawImgToCanvas = function() {
+				var c = document.createElement("canvas");
+				c.width = sourceEl.naturalWidth || sourceEl.width || 1024;
+				c.height = sourceEl.naturalHeight || sourceEl.height || 1024;
+				var ctx = c.getContext("2d");
+				ctx.drawImage(sourceEl, 0, 0, c.width, c.height);
+				onReady(c);
+			};
+
+			if (sourceEl.complete && sourceEl.naturalWidth > 0) {
+				drawImgToCanvas();
+			} else {
+				sourceEl.onload = drawImgToCanvas;
+				sourceEl.onerror = function() { onReady(null); };
+			}
+			return;
+		}
+
+		onReady(null);
+	}
+
+	function downloadCanvas(canvas, mimeType, fileName, quality) {
+		if (!canvas) return;
+
+		if (canvas.toBlob) {
+			canvas.toBlob(function(blob) {
+				if (!blob) return;
+				var blobUrl = URL.createObjectURL(blob);
+				triggerDownload(blobUrl, fileName);
+				setTimeout(function() { URL.revokeObjectURL(blobUrl); }, 1000);
+			}, mimeType, quality);
+		} else {
+			var dataUrl = canvas.toDataURL(mimeType, quality);
+			triggerDownload(dataUrl, fileName);
 		}
 	}
 
-	function downloadJpg() {
-		var img = els.qrcode.querySelector("img");
-		var cvs = els.qrcode.querySelector("canvas");
-		
-		var sourceCanvas;
-		
-		if (cvs) {
-			sourceCanvas = cvs;
-		} else if (img) {
-			// If we only have an img (qrcode.js fallback), we must draw it to a canvas first
-			sourceCanvas = document.createElement("canvas");
-			sourceCanvas.width = img.naturalWidth || 256;
-			sourceCanvas.height = img.naturalHeight || 256;
-			var ctx = sourceCanvas.getContext("2d");
-			ctx.drawImage(img, 0, 0);
-		} else {
-			return; // No source
-		}
+	function downloadPng() {
+		var sourceEl = getQrSourceElement();
+		buildCanvasFromSource(sourceEl, function(sourceCanvas) {
+			downloadCanvas(sourceCanvas, "image/png", "qr-code.png");
+		});
+	}
 
-		var tmpCanvas = document.createElement("canvas");
-		tmpCanvas.width = sourceCanvas.width;
-		tmpCanvas.height = sourceCanvas.height;
-		var tCtx = tmpCanvas.getContext("2d");
-		
-		// Fill background (white default or custom)
-		var fill = state.bg || "#ffffff";
-		if (state.isTransparent) fill = "#ffffff"; 
-		
-		tCtx.fillStyle = fill;
-		tCtx.fillRect(0,0, tmpCanvas.width, tmpCanvas.height);
-		tCtx.drawImage(sourceCanvas, 0, 0);
-		
-		triggerDownload(tmpCanvas.toDataURL("image/jpeg", 0.9), "qr-code.jpg");
+	function downloadJpg() {
+		var sourceEl = getQrSourceElement();
+		buildCanvasFromSource(sourceEl, function(sourceCanvas) {
+			if (!sourceCanvas) return;
+
+			var outCanvas = document.createElement("canvas");
+			outCanvas.width = sourceCanvas.width;
+			outCanvas.height = sourceCanvas.height;
+			var outCtx = outCanvas.getContext("2d");
+
+			var fill = state.bg || "#ffffff";
+			if (state.isTransparent) fill = "#ffffff";
+			outCtx.fillStyle = fill;
+			outCtx.fillRect(0, 0, outCanvas.width, outCanvas.height);
+			outCtx.drawImage(sourceCanvas, 0, 0);
+
+			downloadCanvas(outCanvas, "image/jpeg", "qr-code.jpg", 0.92);
+		});
 	}
 
 	function downloadSvg() {
