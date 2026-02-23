@@ -137,6 +137,27 @@
 		border: 1px solid var(--border);
 	}
 
+	.btn-primary {
+		background: var(--primary);
+		color: white;
+		border: none;
+		padding: 12px 24px;
+		border-radius: 12px;
+		font-weight: 700;
+		cursor: pointer;
+		transition: all 0.2s;
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		margin-top: 15px;
+	}
+	.btn-primary:hover {
+		background: var(--primary-hover);
+		transform: translateY(-2px);
+		box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3);
+	}
+	.btn-primary:active { transform: translateY(0); }
+
 	.dynamic-tip {
 		font-size: 12px;
 		margin-top: 8px;
@@ -234,19 +255,42 @@
 		box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 	}
 
-	/* Result Area */
 	.result-area {
 		display: flex;
 		flex-direction: column;
-		align-items: center;
-		padding: 40px;
-		background: var(--bg-deep);
+		padding: 30px;
+		background: var(--bg-card); /* Matching 1,2,3 - wait, 1,2,3 use bg-card for the main container and deep for inputs? No, the container is bg-card */
 		border-radius: 24px;
 		position: relative;
 		border: 1px solid var(--border);
 		transition: all 0.3s;
 		overflow: hidden;
 		margin-top: 30px;
+	}
+
+	.qr-preview-url {
+		font-family: 'Cascadia Code', 'Courier New', monospace;
+		font-size: 11px;
+		color: var(--primary);
+		background: var(--bg-deep);
+		padding: 8px 12px;
+		border-radius: 10px;
+		border: 1px solid var(--border);
+		margin-bottom: 20px;
+		word-break: break-all;
+		display: none;
+		align-items: center;
+		gap: 8px;
+	}
+	.qr-preview-url::before { content: '🔗'; font-size: 12px; }
+
+	.qr-text-label {
+		margin-top: 10px;
+		font-size: 12px;
+		font-weight: 600;
+		color: var(--text-main);
+		text-align: center;
+		display: none;
 	}
 	
 	.result-step-header {
@@ -267,7 +311,7 @@
 	/* QR Main Layout */
 	.qr-main-layout {
 		display: grid;
-		grid-template-columns: 86px auto 116px;
+		grid-template-columns: 100px auto 116px;
 		align-items: center;
 		gap: 14px;
 		width: 100%;
@@ -324,6 +368,21 @@
 	.bg-toggle-compact:hover { border-color: var(--primary); color: var(--primary); }
 	.bg-toggle-compact input:checked + div { color: var(--success); }
 	.bg-toggle-compact.active-toggle { background: var(--primary); border-color: var(--primary); color: white !important; }
+
+	.mode-item {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		width: 100%;
+		cursor: pointer;
+	}
+	.mode-text {
+		font-size: 9px;
+		font-weight: 700;
+		color: var(--text-muted);
+		letter-spacing: 0.5px;
+	}
+	.active-toggle + .mode-text { color: var(--primary); }
 
 	/* Transparency Effect on Buttons */
 	.btn-highlight { 
@@ -487,6 +546,10 @@
 			<input type="text" id="text" data-i18n-placeholder="placeholder" placeholder="yoursite.ru" autocomplete="off" spellcheck="false">
 			<div class="char-counter" id="char-counter">0</div>
 		</div>
+		<button id="btn-generate" class="btn-primary hidden">
+			<span data-i18n="btn-gen">Создать QR-код</span>
+			<span>🚀</span>
+		</button>
 		<div class="dynamic-tip" id="dynamic-tip" data-i18n="tip-wait">Введите адрес сайта для начала работы...</div>
 	</div>
 
@@ -533,41 +596,51 @@
 					<span data-i18n="complex-info">Уровень H (30%)</span>
 				</div>
 			</div>
-			
-			<!-- Moved Transparency & Stress to QR visual step -->
 		</div>
 	</div>
 
 	<div class="result-area hidden">
-		<div class="result-step-header">
+		<div class="section-title">
 			<span class="step-number">04</span>
 			<span data-i18n="step4">ВИЗУАЛ И ЭКСПОРТ</span>
 		</div>
+
+		<div id="url-preview" class="qr-preview-url"></div>
 
 		<div class="stress-label">SCAN SIMULATION MODE</div>
 		
 		<div class="qr-main-layout">
 			<div class="qr-left-controls">
+				<div style="font-size: 8px; color: var(--text-muted); font-weight: 800; letter-spacing: 1px; margin-bottom: 4px;" data-i18n="label-colors">ЦВЕТА</div>
 				<div class="qr-style-picker">
-					<div class="style-dot active" style="background: linear-gradient(135deg, white 50%, black 50%);" data-fg="#000000" data-bg="#ffffff" title="Classic Mono"></div>
-					<div class="style-dot" style="background: linear-gradient(135deg, #1e293b 50%, #facc15 50%);" data-fg="#facc15" data-bg="#1e293b" title="Cyber Yellow (Dark)"></div>
-					<div class="style-dot" style="background: linear-gradient(135deg, #f0fdf4 50%, #15803d 50%);" data-fg="#15803d" data-bg="#f0fdf4" title="Eco Green"></div>
-					<div class="style-dot" style="background: linear-gradient(135deg, #eff6ff 50%, #1d4ed8 50%);" data-fg="#1d4ed8" data-bg="#eff6ff" title="Tech Blue"></div>
-					<div class="style-dot" style="background: linear-gradient(135deg, #fff1f2 50%, #be123c 50%);" data-fg="#be123c" data-bg="#fff1f2" title="Brand Red"></div>
+					<div class="style-dot active" style="background: linear-gradient(135deg, white 50%, black 50%);" data-fg="#000000" data-bg="#ffffff" data-i18n-title="Classic Mono"></div>
+					<div class="style-dot" style="background: linear-gradient(135deg, #1e293b 50%, #facc15 50%);" data-fg="#facc15" data-bg="#1e293b" data-i18n-title="Cyber Yellow (Dark)"></div>
+					<div class="style-dot" style="background: linear-gradient(135deg, #f0fdf4 50%, #15803d 50%);" data-fg="#15803d" data-bg="#f0fdf4" data-i18n-title="Eco Green"></div>
+					<div class="style-dot" style="background: linear-gradient(135deg, #eff6ff 50%, #1d4ed8 50%);" data-fg="#1d4ed8" data-bg="#eff6ff" data-i18n-title="Tech Blue"></div>
+					<div class="style-dot" style="background: linear-gradient(135deg, #fff1f2 50%, #be123c 50%);" data-fg="#be123c" data-bg="#fff1f2" data-i18n-title="Brand Red"></div>
 				</div>
-				<div style="display:flex; flex-direction:column; gap:8px;">
-					<label class="bg-toggle-compact" title="Transparent Background">
-						<input type="checkbox" id="toggle-transparency">
-						<div class="bg-check" style="font-size:10px;">⬛</div>
+				<div style="font-size: 8px; color: var(--text-muted); font-weight: 800; letter-spacing: 1px; margin: 10px 0 4px;" data-i18n="label-modes">РЕЖИМЫ</div>
+				<div style="display:flex; flex-direction:column; gap:8px; width: 100%;">
+					<label class="mode-item" data-i18n-title="opt-trans">
+						<div class="bg-toggle-compact">
+							<input type="checkbox" id="toggle-transparency">
+							<div class="bg-check" style="font-size:10px;">⬛</div>
+						</div>
+						<span class="mode-text" data-i18n="label-trans">ПРОЗРАЧ.</span>
 					</label>
-					<label class="bg-toggle-compact" title="Simulation Mode">
-						<input type="checkbox" id="toggle-stress">
-						<div class="bg-check" style="font-size:10px;">⚠️</div>
+					<label class="mode-item" data-i18n-title="stress-desc">
+						<div class="bg-toggle-compact">
+							<input type="checkbox" id="toggle-stress">
+							<div class="bg-check" style="font-size:10px;">⚠️</div>
+						</div>
+						<span class="mode-text" data-i18n="label-stress">ТЕСТ</span>
 					</label>
 				</div>
 			</div>
 
-			<div id="qrcode"></div>
+			<div style="display: flex; flex-direction: column; align-items: center;">
+				<div id="qrcode"></div>
+			</div>
 
 			<div class="action-row">
 				<button class="btn-dl" id="download-png" title="Raster image, great for web/social"><span>🖼️</span> PNG</button>
@@ -576,17 +649,9 @@
 				<button class="btn-dl" id="download-pdf" title="Document format for sharing/printing"><span>📄</span> PDF</button>
 			</div>
 		</div>
-		
-		<div style="margin-top:20px; font-size: 11px; color: var(--text-muted); display: grid; gap: 8px;">
-			<div style="display:flex; gap:8px; align-items:center;">
-				<span style="font-weight:bold; color:var(--primary);">PNG/JPG</span> 
-				<span data-i18n="exp-raster">Для соцсетей, презентаций и быстрой отправки.</span>
-			</div>
-			<div style="display:flex; gap:8px; align-items:center;">
-				<span style="font-weight:bold; color:var(--primary);">SVG/PDF</span> 
-				<span data-i18n="exp-vector">Векторный формат. Идеально для типографии, билбордов и печати любого размера.</span>
-			</div>
-		</div>
+
+		<!-- Visual Status Tips -->
+		<div id="visual-status-tip" style="margin-top: 5px; margin-bottom: 10px; font-size: 11px; color: var(--accent); min-height: 16px; text-align: center; font-weight: 600; opacity: 0; transition: opacity 0.3s;"></div>
 	</div>
 
 	<footer class="info-footer">
@@ -596,8 +661,9 @@
 				<p data-i18n="f1-p">Прямое кодирование без редиректов. Код работает вечно, пока жив ваш домен.</p>
 			</div>
 			<div class="info-item">
-				<h3 data-i18n="f2-t">SVG Вектор</h3>
-				<p data-i18n="f2-p">Профессиональный формат для типографии. Растягивается до размера билборда.</p>
+				<h3 data-i18n="f2-title">Форматы экспорта</h3>
+				<p style="margin-bottom: 8px;"><strong style="color:var(--primary);">PNG/JPG:</strong> <span data-i18n="exp-raster">Для соцсетей, презентаций и быстрой отправки.</span></p>
+				<p><strong style="color:var(--primary);">SVG/PDF:</strong> <span data-i18n="exp-vector">Векторный формат. Идеально для типографии, билбордов и печати любого размера.</span></p>
 			</div>
 			<div class="info-item">
 				<h3 data-i18n="f3-t">Приватность</h3>
@@ -621,9 +687,12 @@
 		input: document.getElementById("text"),
 		counter: document.getElementById("char-counter"),
 		tip: document.getElementById("dynamic-tip"),
+		visualTip: document.getElementById("visual-status-tip"),
 		validator: document.getElementById("validator-icon"),
 		defaultIcon: document.getElementById("default-icon"),
+		btnGenerate: document.getElementById("btn-generate"),
 		resultArea: document.querySelector(".result-area"),
+		urlPreview: document.getElementById("url-preview"),
 		qrcode: document.getElementById("qrcode"),
 		svgHost: document.getElementById("svg-host"),
 		rasterHost: document.getElementById("raster-host"),
@@ -671,7 +740,7 @@
 			placeholder: "yoursite.ru",
 			tip_wait: "Введите адрес сайта для начала работы...",
 			tip_ok: "✨ Отличная ссылка. Код готов к скачиванию.",
-			tip_long: "💡 Ссылка длинная. Рекомендуем сократить UTM метки.",
+			tip_long: "💡 В ссылке много UTM-меток. Код будет сложным для сканирования.",
 			tip_space: "⚠️ В ссылке есть пробелы — они будут удалены автоматически.",
 			tip_invalid_chars: "⛔ В ссылке есть недопустимые символы: < > \" ` \\ | ^ [ ]",
 			tip_missing_domain: "⚠️ Похоже, в ссылке нет домена (пример: site.ru).",
@@ -695,7 +764,18 @@
 			exp_raster: "Для соцсетей, презентаций и быстрой отправки.",
 			exp_vector: "Векторный формат. Идеально для типографии, билбордов и печати любого размера.",
 			complex_info: "Уровень коррекции ошибок (H) 30% — QR читается даже при 30% повреждений.",
-			opt_trans_short: "Вкл. прозрачность"
+			opt_trans_short: "Вкл. прозрачность",
+			tip_trans_on: "💡 Прозрачность активна: SVG и PDF сохранят прозрачный фон для дизайна.",
+			tip_stress_on: "🧪 Режим замера: имитация плохого освещения и размытия камеры.",
+			step4: "ВИЗУАЛ И ЭКСПОРТ",
+			label_colors: "ЦВЕТА",
+			label_modes: "РЕЖИМЫ",
+			label_trans: "ПРОЗРАЧ.",
+			label_stress: "ТЕСТ",
+			f2_title: "Форматы экспорта",
+			btn_gen: "Создать QR-код",
+			tip_manual: "💡 Ссылка очень длинная. Нажмите кнопку ниже для создания кода.",
+			tip_filename: "ℹ️ Ссылка автоматически добавляется в имя файла для удобства."
 		},
 		EN: {
 			title: "QR Code Generator",
@@ -704,7 +784,7 @@
 			placeholder: "yoursite.com",
 			tip_wait: "Enter URL to start generating...",
 			tip_ok: "✨ Perfect link. QR Code is ready.",
-			tip_long: "💡 URL is long. Consider removing tracking tags.",
+			tip_long: "💡 Too many tracking tags. QR might be harder to scan.",
 			tip_space: "⚠️ URL contains spaces — they will be removed automatically.",
 			tip_invalid_chars: "⛔ URL contains invalid characters: < > \" ` \\ | ^ [ ]",
 			tip_missing_domain: "⚠️ URL seems to have no domain (example: site.com).",
@@ -728,7 +808,20 @@
 			exp_raster: "Best for social media, screens, and quick sharing.",
 			exp_vector: "Vector format. Perfect for print, billboards, and scaling.",
 			complex_info: "Error Correction Level (H) 30% — QR remains readable with 30% damage.",
-			opt_trans_short: "Transparency"
+			opt_trans_short: "Transparency",
+			tip_trans_on: "💡 Transparency active: SVG/PDF will have no background for design overlays.",
+			tip_stress_on: "🧪 Test Mode: simulating low light and motion blur for reliability.",
+			opt_label: "Label under QR",
+			opt_label_desc: "Add human-readable URL",
+			step4: "VISUAL & EXPORT",
+			label_colors: "COLORS",
+			label_modes: "MODES",
+			label_trans: "TRANS.",
+			label_stress: "TEST",
+			f2_title: "Export Formats",
+			btn_gen: "Generate QR Code",
+			tip_manual: "💡 Link is very long. Press the button below to generate.",
+			tip_filename: "ℹ️ The URL is automatically included in the filename for convenience."
 		}
 	};
 
@@ -746,6 +839,11 @@
 	function setupListeners() {
 		// Auto-generate on any input
 		els.input.addEventListener("input", handleInput);
+		els.btnGenerate.addEventListener("click", function() {
+			generate();
+			els.resultArea.classList.remove("hidden");
+			els.btnGenerate.classList.add("hidden");
+		});
 		
 		// Config Toggles
 		[els.stripTracking, els.addProtocol, els.transparency, els.stress].forEach(function(el) {
@@ -804,17 +902,29 @@
 	function handleInput() {
 		var val = els.input.value;
 		els.counter.textContent = val.length;
+		var dict = translations[state.lang];
 		
 		if (val.length > 0) {
 			els.validator.classList.add("active");
 			els.defaultIcon.style.opacity = "0";
-			els.resultArea.classList.remove("hidden");
-			generate();
+
+			// Auto-generate logic
+			if (val.length <= 100) {
+				els.resultArea.classList.remove("hidden");
+				els.btnGenerate.classList.add("hidden");
+				generate();
+			} else {
+				// Too long for auto: show button if not already visible/rendered
+				els.tip.textContent = dict.tip_manual;
+				els.tip.style.color = "var(--primary)";
+				els.btnGenerate.classList.remove("hidden");
+				// Note: we don't call generate() yet
+			}
 		} else {
 			els.validator.classList.remove("active");
 			els.defaultIcon.style.opacity = "1";
 			els.resultArea.classList.add("hidden");
-			var dict = translations[state.lang];
+			els.btnGenerate.classList.add("hidden");
 			els.tip.textContent = dict.tip_wait;
 			els.tip.style.color = "var(--primary)";
 		}
@@ -842,7 +952,8 @@
 			return { text: dict.tip_http, color: "var(--primary)" };
 		}
 
-		if (normalizedUrl.length > 60) {
+		// Only suggest shortening if UTM/Tracking tags are actually present
+		if (normalizedUrl.length > 70 && /[?&](utm_|fbclid|gclid)/i.test(rawInput)) {
 			return { text: dict.tip_long, color: "var(--warning)" };
 		}
 
@@ -900,6 +1011,14 @@
 			els.stress.parentElement.classList.add("active-toggle");
 		} else {
 			els.stress.parentElement.classList.remove("active-toggle");
+		}
+
+		// URL Preview Update
+		if (finalUrl) {
+			els.urlPreview.textContent = finalUrl;
+			els.urlPreview.style.display = "flex";
+		} else {
+			els.urlPreview.style.display = "none";
 		}
 
 		// Canvas Generation (Display)
@@ -974,6 +1093,21 @@
 			H: (state.lang === "RU" ? "Максимальная (30%) — QR читается даже при 30% повреждений." : "Max (30%) — QR remains readable with 30% damage.")
 		};
 		if(els.complexInfoTxt) els.complexInfoTxt.textContent = infoMap[state.level];
+
+		// Update Visual Tip
+		var dict = translations[state.lang];
+		if(els.stress.checked) {
+			els.visualTip.textContent = dict.tip_stress_on;
+			els.visualTip.style.opacity = "1";
+		} else if(state.isTransparent) {
+			els.visualTip.textContent = dict.tip_trans_on;
+			els.visualTip.style.opacity = "1";
+		} else if (raw.length > 0) {
+			els.visualTip.textContent = dict.tip_filename;
+			els.visualTip.style.opacity = "0.7";
+		} else {
+			els.visualTip.style.opacity = "0";
+		}
 	}
 
 	function updateLang() {
@@ -990,6 +1124,13 @@
 
 		document.querySelectorAll("[data-i18n-placeholder]").forEach(function(el) {
 			el.placeholder = dict.placeholder;
+		});
+
+		document.querySelectorAll("[data-i18n-title]").forEach(function(el) {
+			var k = el.getAttribute("data-i18n-title");
+			var cleanK = k.replace(/-/g, "_");
+			if (dict[cleanK]) el.title = dict[cleanK];
+			if (dict[k]) el.title = dict[k];
 		});
 
 		if (els.input.value) handleInput();
