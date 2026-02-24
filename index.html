@@ -58,12 +58,13 @@
 	h1 { 
 		font-size: 28px; 
 		margin: 0 0 8px; 
-		background: linear-gradient(135deg, var(--primary), var(--accent));
+		background: linear-gradient(135deg, #f59e0b, #fbbf24, #f59e0b);
 		background-clip: text;
 		-webkit-background-clip: text;
 		-webkit-text-fill-color: transparent;
 		font-weight: 800; 
 		letter-spacing: -0.03em;
+		display: inline-block; /* Helps prevent some rendering glitches with background-clip */
 	}
 	.subtitle { font-size: 14px; color: var(--text-muted); margin: 0; }
 
@@ -1297,9 +1298,8 @@
 		var doc = new jsPDF('p', 'mm', 'a4');
 		
 		// Create a high-res virtual page (A4-ish aspect ratio)
-		// 1200x1600 is plenty for a crisp PDF image
 		var width = 1200;
-		var height = 1600;
+		var height = 1697; // Exactly A4 ratio (1200 / 210 * 297)
 		var canv = document.createElement("canvas");
 		canv.width = width;
 		canv.height = height;
@@ -1328,11 +1328,10 @@
 		var qrSize = 800;
 		var qrX = (width - qrSize) / 2;
 		var qrY = 350;
+		var fullUrl = normalizeUrl(els.input.value);
 		
-		var raw = els.input.value;
-		var finalUrl = normalizeUrl(raw);
 		var qr = new QRCode(document.createElement("div"), {
-			text: finalUrl,
+			text: fullUrl,
 			width: qrSize,
 			height: qrSize,
 			colorDark: state.fg,
@@ -1361,16 +1360,27 @@
 			}
 		}
 		
-		// 5. Footer
+		// 5. Footer (Links)
+		ctx.textAlign = "center";
 		ctx.fillStyle = "#94a3b8";
-		ctx.font = "28px 'Segoe UI', sans-serif";
-		ctx.fillText("ENGINEERED BY HEDGENIOUS", width/2, 1450);
+		ctx.font = "24px 'Segoe UI', sans-serif";
+		ctx.fillText("ENGINEERED BY HEDGENIOUS", width/2, 1480);
+		ctx.fillStyle = "#3b82f6";
+		ctx.font = "20px 'Segoe UI', sans-serif";
+		ctx.fillText("hedgenious.github.io/QR_code_generator", width/2, 1530);
 		
 		// Use PNG (lossless) for the PDF to ensure no compression artifacts (lines)
 		var imgData = canv.toDataURL("image/png");
 
 		// Add page-filling image to PDF (210mm width for A4)
-		doc.addImage(imgData, 'PNG', 0, 0, 210, 280);
+		doc.addImage(imgData, 'PNG', 0, 0, 210, 297);
+		
+		// Invisible Links
+		var pxToMm = 210 / width;
+		doc.link(40, 40, 130, 15, { url: fullUrl }); // Top area
+		doc.link(qrX * pxToMm, qrY * pxToMm, qrSize * pxToMm, qrSize * pxToMm, { url: fullUrl }); // QR
+		doc.link(70, 255, 70, 8, { url: "https://github.com/Hedgenious" });
+		doc.link(65, 265, 80, 8, { url: "https://hedgenious.github.io/QR_code_generator/" });
 		
 		doc.save(buildSafeFileName("pdf"));
 	}
