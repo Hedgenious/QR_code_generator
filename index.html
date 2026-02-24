@@ -404,13 +404,18 @@
 	}
 
 	#qrcode {
-		margin-bottom: 15px;
-		border-radius: 6px; /* Sharper corners for QR */
-		overflow: hidden;
-		transition: opacity 0.5s;
-		border: 12px solid white; /* More whitespace */
+		margin-bottom: 20px;
+		border-radius: 6px;
 		background: white;
+		padding: 18px; /* Restored fields/margins */
 		box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
+		transition: opacity 0.5s;
+	}
+
+	#qrcode canvas { 
+		display: block; 
+		image-rendering: pixelated; /* Chrome/Better seamless look */
+		image-rendering: crisp-edges;
 	}
 	#qrcode img, #qrcode svg { display: block; }
 	
@@ -1204,7 +1209,7 @@
 			}
 
 			var modules = model.getModuleCount();
-			var quietZone = 4;
+			var quietZone = 6;
 			var total = modules + quietZone * 2;
 			var cell = size / total;
 
@@ -1212,11 +1217,12 @@
 			for (var row = 0; row < modules; row++) {
 				for (var col = 0; col < modules; col++) {
 					if (!model.isDark(row, col)) continue;
-					var x1 = Math.round((col + quietZone) * cell);
-					var y1 = Math.round((row + quietZone) * cell);
-					var x2 = Math.round((col + quietZone + 1) * cell);
-					var y2 = Math.round((row + quietZone + 1) * cell);
-					ctx.fillRect(x1, y1, Math.max(1, x2 - x1), Math.max(1, y2 - y1));
+					// Use floor and ceil to eliminate sub-pixel gaps (thin white lines)
+					var x1 = Math.floor((col + quietZone) * cell);
+					var y1 = Math.floor((row + quietZone) * cell);
+					var x2 = Math.ceil((col + quietZone + 1) * cell);
+					var y2 = Math.ceil((row + quietZone + 1) * cell);
+					ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
 				}
 			}
 
@@ -1269,12 +1275,12 @@
 		
 		var serializer = new XMLSerializer();
 		
-		// If custom background, we should probably insert a rect if it's not transparent
-		// But qrcode.js with useSVG:true usually creates a rect for bg if colorLight is set.
-		// However, my updated generate() logic sets colorLight to 'transparent' if toggle on,
-		// or state.bg otherwise.
+		// Clone to avoid modifying the hidden host
+		var clonedSvg = svg.cloneNode(true);
+		// Add crispEdges to eliminate thin lines between modules in vector
+		clonedSvg.setAttribute("shape-rendering", "crispEdges");
 		
-		var source = serializer.serializeToString(svg);
+		var source = serializer.serializeToString(clonedSvg);
 		
 		// Ensure XML declaration
 		if (!source.match(/^<\?xml/)) {
@@ -1291,6 +1297,7 @@
 		var doc = new jsPDF('p', 'mm', 'a4');
 		
 		// Create a high-res virtual page (A4-ish aspect ratio)
+		// 1200x1600 is plenty for a crisp PDF image
 		var width = 1200;
 		var height = 1600;
 		var canv = document.createElement("canvas");
@@ -1304,7 +1311,6 @@
 		
 		// 2. Title (Safe Cyrillic via Canvas)
 		ctx.fillStyle = "#000000";
-		// Using standard system fonts that support RU
 		ctx.font = "bold 64px 'Segoe UI', Arial, sans-serif";
 		ctx.textAlign = "center";
 		var title = translations[state.lang].title;
@@ -1317,11 +1323,42 @@
 		if(displayUrl.length > 55) displayUrl = displayUrl.substring(0, 52) + "...";
 		ctx.fillText(displayUrl, width/2, 260);
 		
-		// 4. QR Code
-		var qrCvs = buildExportCanvas(1024, true);
-		if(qrCvs) {
-			// Center the 1024x1024 QR code
-			ctx.drawImage(qrCvs, (width - 850)/2, 350, 850, 850);
+		// 4. QR Code (Generate at final target size to avoid scaling artifacts)
+		// Target size is roughly 800px on the 1200px wide canvas to give more air
+		var qrSize = 800;
+		var qrX = (width - qrSize) / 2;
+		var qrY = 350;
+		
+		var raw = els.input.value;
+		var finalUrl = normalizeUrl(raw);
+		var qr = new QRCode(document.createElement("div"), {
+			text: finalUrl,
+			width: qrSize,
+			height: qrSize,
+			colorDark: state.fg,
+			colorLight: "#ffffff",
+			correctLevel: QRCode.CorrectLevel[state.level]
+		});
+		
+		var model = qr && qr._oQRCode ? qr._oQRCode : null;
+		if (model) {
+			var modules = model.getModuleCount();
+			var quietZone = 6;
+			var total = modules + quietZone * 2;
+			var cell = qrSize / total;
+			
+			ctx.fillStyle = state.fg || "#000000";
+			for (var row = 0; row < modules; row++) {
+				for (var col = 0; col < modules; col++) {
+					if (!model.isDark(row, col)) continue;
+					// OVERLAP LOGIC: Use floor/ceil to ensure modules touch perfectly
+					var x1 = Math.floor(qrX + (col + quietZone) * cell);
+					var y1 = Math.floor(qrY + (row + quietZone) * cell);
+					var x2 = Math.ceil(qrX + (col + quietZone + 1) * cell);
+					var y2 = Math.ceil(qrY + (row + quietZone + 1) * cell);
+					ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
+				}
+			}
 		}
 		
 		// 5. Footer
@@ -1329,10 +1366,11 @@
 		ctx.font = "28px 'Segoe UI', sans-serif";
 		ctx.fillText("ENGINEERED BY HEDGENIOUS", width/2, 1450);
 		
-		var imgData = canv.toDataURL("image/jpeg", 0.95);
+		// Use PNG (lossless) for the PDF to ensure no compression artifacts (lines)
+		var imgData = canv.toDataURL("image/png");
 
 		// Add page-filling image to PDF (210mm width for A4)
-		doc.addImage(imgData, 'JPEG', 0, 0, 210, 280);
+		doc.addImage(imgData, 'PNG', 0, 0, 210, 280);
 		
 		doc.save(buildSafeFileName("pdf"));
 	}
