@@ -635,6 +635,13 @@
 						</div>
 						<span class="mode-text" data-i18n="label-trans">ПРОЗРАЧ.</span>
 					</label>
+					<label class="mode-item" data-i18n-title="opt-round">
+						<div class="bg-toggle-compact">
+							<input type="checkbox" id="toggle-rounded">
+							<div class="bg-check" style="font-size:10px;">🔲</div>
+						</div>
+						<span class="mode-text" data-i18n="label-round">УГЛЫ</span>
+					</label>
 					<label class="mode-item" data-i18n-title="stress-desc">
 						<div class="bg-toggle-compact">
 							<input type="checkbox" id="toggle-stress">
@@ -708,6 +715,7 @@
 		stripTracking: document.getElementById("strip-tracking"),
 		addProtocol: document.getElementById("add-protocol"),
 		transparency: document.getElementById("toggle-transparency"),
+		rounded: document.getElementById("toggle-rounded"),
 		stress: document.getElementById("toggle-stress"),
 		
 		// Controls
@@ -736,6 +744,7 @@
 		fg: "#000000",
 		bg: "#ffffff",
 		isTransparent: false,
+		isRounded: false,
 		lang: "RU"
 	};
 
@@ -778,6 +787,8 @@
 			label_colors: "ЦВЕТА",
 			label_modes: "РЕЖИМЫ",
 			label_trans: "ПРОЗРАЧ.",
+			label_round: "УГЛЫ",
+			opt_round: "Скругленные углы рамки",
 			label_stress: "ТЕСТ",
 			f2_title: "Форматы экспорта",
 			btn_gen: "Создать QR-код",
@@ -824,6 +835,8 @@
 			label_colors: "COLORS",
 			label_modes: "MODES",
 			label_trans: "TRANS.",
+			label_round: "ROUND.",
+			opt_round: "Rounded Frame Corners",
 			label_stress: "TEST",
 			f2_title: "Export Formats",
 			btn_gen: "Generate QR Code",
@@ -853,7 +866,7 @@
 		});
 		
 		// Config Toggles
-		[els.stripTracking, els.addProtocol, els.transparency, els.stress].forEach(function(el) {
+		[els.stripTracking, els.addProtocol, els.transparency, els.rounded, els.stress].forEach(function(el) {
 			el.addEventListener("change", generate);
 		});
 
@@ -1001,6 +1014,7 @@
 
 		var finalUrl = normalizeUrl(raw);
 		state.isTransparent = els.transparency.checked;
+		state.isRounded = els.rounded.checked;
 		
 		// Highlight Logic
 		if(state.isTransparent) {
@@ -1018,6 +1032,14 @@
 			els.stress.parentElement.classList.add("active-toggle");
 		} else {
 			els.stress.parentElement.classList.remove("active-toggle");
+		}
+
+		if(els.rounded.checked) {
+			els.rounded.parentElement.classList.add("active-toggle");
+			els.qrcode.style.borderRadius = "24px";
+		} else {
+			els.rounded.parentElement.classList.remove("active-toggle");
+			els.qrcode.style.borderRadius = "6px";
 		}
 
 		// URL Preview Update
@@ -1059,12 +1081,14 @@
 		// Else use selected BG.
 		var exportBg = state.isTransparent ? "rgba(0,0,0,0)" : displayBg;
 
+		var svgExportBg = state.isRounded ? "rgba(0,0,0,0)" : exportBg;
+
 		new QRCode(els.svgHost, {
 			text: finalUrl,
 			width: 1024,
 			height: 1024,
 			colorDark: displayFg,
-			colorLight: exportBg,
+			colorLight: svgExportBg,
 			correctLevel: QRCode.CorrectLevel[state.level],
 			useSVG: true
 		});
@@ -1176,6 +1200,21 @@
 		return "qr-" + nameCore + "." + extension;
 	}
 
+	function drawRoundRect(ctx, x, y, w, h, r) {
+		ctx.beginPath();
+		ctx.moveTo(x + r, y);
+		ctx.lineTo(x + w - r, y);
+		ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+		ctx.lineTo(x + w, y + h - r);
+		ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+		ctx.lineTo(x + r, y + h);
+		ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+		ctx.lineTo(x, y + r);
+		ctx.quadraticCurveTo(x, y, x + r, y);
+		ctx.closePath();
+		ctx.fill();
+	}
+
 	function buildExportCanvas(size, forceOpaqueForJpg) {
 		var raw = els.input.value;
 		if (!raw) return null;
@@ -1190,7 +1229,11 @@
 			var bg = state.bg || "#ffffff";
 			if (forceOpaqueForJpg || !state.isTransparent) {
 				ctx.fillStyle = bg;
-				ctx.fillRect(0, 0, size, size);
+				if (state.isRounded) {
+					drawRoundRect(ctx, 0, 0, size, size, size * 0.1);
+				} else {
+					ctx.fillRect(0, 0, size, size);
+				}
 			} else {
 				ctx.clearRect(0, 0, size, size);
 			}
@@ -1281,6 +1324,17 @@
 		// Add crispEdges to eliminate thin lines between modules in vector
 		clonedSvg.setAttribute("shape-rendering", "crispEdges");
 		
+		// If rounded framing is active and not meant to be transparent, inject a background rect
+		if (state.isRounded && !state.isTransparent) {
+			var bgRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+			bgRect.setAttribute("width", "100%");
+			bgRect.setAttribute("height", "100%");
+			bgRect.setAttribute("rx", "10%");
+			bgRect.setAttribute("ry", "10%");
+			bgRect.setAttribute("fill", state.bg || "#ffffff");
+			clonedSvg.insertBefore(bgRect, clonedSvg.firstChild);
+		}
+		
 		var source = serializer.serializeToString(clonedSvg);
 		
 		// Ensure XML declaration
@@ -1330,12 +1384,21 @@
 		var qrY = 350;
 		var fullUrl = normalizeUrl(els.input.value);
 		
+		// Draw rounded background for the QR code if enabled and no transparency
+		if (state.isRounded && !state.isTransparent) {
+			ctx.fillStyle = state.bg || "#ffffff";
+			drawRoundRect(ctx, qrX, qrY, qrSize, qrSize, qrSize * 0.1);
+		} else if (!state.isTransparent) {
+			ctx.fillStyle = state.bg || "#ffffff";
+			ctx.fillRect(qrX, qrY, qrSize, qrSize);
+		}
+		
 		var qr = new QRCode(document.createElement("div"), {
 			text: fullUrl,
 			width: qrSize,
 			height: qrSize,
 			colorDark: state.fg,
-			colorLight: "#ffffff",
+			colorLight: state.isRounded ? "rgba(0,0,0,0)" : "#ffffff",
 			correctLevel: QRCode.CorrectLevel[state.level]
 		});
 		
