@@ -322,10 +322,9 @@
 	}
 
 	.qr-style-picker {
-		display: flex;
+		display: grid;
+		grid-template-columns: repeat(2, 24px);
 		gap: 10px;
-		flex-direction: column;
-		flex-wrap: nowrap;
 		justify-content: center;
 		align-items: center;
 	}
@@ -518,7 +517,7 @@
 		.qr-main-layout { grid-template-columns: 1fr; }
 		.qr-left-controls, .action-row { width: 100%; }
 		.action-row { grid-template-columns: repeat(2, 1fr); }
-		.qr-style-picker { flex-direction: row; flex-wrap: wrap; }
+		.qr-style-picker { display: flex; flex-direction: row; flex-wrap: wrap; }
 		/* .theme-panel removed */
 		.lang-switcher { top: 15px; right: 15px; }
 	}
@@ -620,11 +619,16 @@
 			<div class="qr-left-controls">
 				<div style="font-size: 8px; color: var(--text-muted); font-weight: 800; letter-spacing: 1px; margin-bottom: 4px;" data-i18n="label-colors">ЦВЕТА</div>
 				<div class="qr-style-picker">
-					<div class="style-dot active" style="background: linear-gradient(135deg, white 50%, black 50%);" data-fg="#000000" data-bg="#ffffff" data-i18n-title="Classic Mono"></div>
-					<div class="style-dot" style="background: linear-gradient(135deg, #1e293b 50%, #facc15 50%);" data-fg="#facc15" data-bg="#1e293b" data-i18n-title="Cyber Yellow (Dark)"></div>
-					<div class="style-dot" style="background: linear-gradient(135deg, #f0fdf4 50%, #15803d 50%);" data-fg="#15803d" data-bg="#f0fdf4" data-i18n-title="Eco Green"></div>
-					<div class="style-dot" style="background: linear-gradient(135deg, #eff6ff 50%, #1d4ed8 50%);" data-fg="#1d4ed8" data-bg="#eff6ff" data-i18n-title="Tech Blue"></div>
-					<div class="style-dot" style="background: linear-gradient(135deg, #fff1f2 50%, #be123c 50%);" data-fg="#be123c" data-bg="#fff1f2" data-i18n-title="Brand Red"></div>
+					<div class="style-dot active" style="background: linear-gradient(135deg, white 50%, black 50%);" data-fg="#000000" data-bg="#ffffff" data-i18n-title="Classic Mono" title="Classic Mono"></div>
+					<div class="style-dot" style="background: linear-gradient(135deg, #1e293b 50%, #facc15 50%);" data-fg="#facc15" data-bg="#1e293b" data-i18n-title="Cyber Yellow (Dark)" title="Cyber Yellow (Dark)"></div>
+					<div class="style-dot" style="background: linear-gradient(135deg, #f0fdf4 50%, #15803d 50%);" data-fg="#15803d" data-bg="#f0fdf4" data-i18n-title="Eco Green" title="Eco Green"></div>
+					<div class="style-dot" style="background: linear-gradient(135deg, #eff6ff 50%, #1d4ed8 50%);" data-fg="#1d4ed8" data-bg="#eff6ff" data-i18n-title="Tech Blue" title="Tech Blue"></div>
+					<div class="style-dot" style="background: linear-gradient(135deg, #fff1f2 50%, #be123c 50%);" data-fg="#be123c" data-bg="#fff1f2" data-i18n-title="Brand Red" title="Brand Red"></div>
+					<div class="style-dot" style="background: linear-gradient(135deg, #fff7ed 50%, #ea580c 50%);" data-fg="#ea580c" data-bg="#fff7ed" data-i18n-title="Sunset Orange" title="Sunset Orange"></div>
+					<div class="style-dot" style="background: linear-gradient(135deg, #faf5ff 50%, #7e22ce 50%);" data-fg="#7e22ce" data-bg="#faf5ff" data-i18n-title="Royal Purple" title="Royal Purple"></div>
+					<div class="style-dot" style="background: linear-gradient(135deg, #f0fdfa 50%, #0f766e 50%);" data-fg="#0f766e" data-bg="#f0fdfa" data-i18n-title="Ocean Teal" title="Ocean Teal"></div>
+					<div class="style-dot" style="background: linear-gradient(135deg, #fdf2f8 50%, #db2777 50%);" data-fg="#db2777" data-bg="#fdf2f8" data-i18n-title="Vibrant Pink" title="Vibrant Pink"></div>
+					<div class="style-dot" style="background: linear-gradient(135deg, #000000 50%, #22c55e 50%);" data-fg="#22c55e" data-bg="#000000" data-i18n-title="Matrix Hacker" title="Matrix Hacker"></div>
 				</div>
 				<div style="font-size: 8px; color: var(--text-muted); font-weight: 800; letter-spacing: 1px; margin: 10px 0 4px;" data-i18n="label-modes">РЕЖИМЫ</div>
 				<div style="display:flex; flex-direction:column; gap:8px; width: 100%;">
